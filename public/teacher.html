@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Quiz - Teacher</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
+    .cols { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .cols > div { flex: 1; min-width: 300px; }
+    .q { border: 1px solid #ccc; border-radius: 6px; padding: .6rem; margin: .5rem 0; }
+    .q.active { border-color: #2563eb; background: #eff6ff; }
+    .row { margin: .6rem 0; font-size: 1.25rem; }
+    .track { background: #e5e7eb; height: 1.2rem; border-radius: 4px; overflow: hidden; }
+    .fill { background: #2563eb; height: 100%; }
+    .off { color: #999; }
+    #conn { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <h1>Live Quiz - Teacher <small id="conn"></small></h1>
+  <div class="cols">
+    <div>
+      <h2>โจทย์</h2>
+      <div id="questions"></div>
+    </div>
+    <div>
+      <h2>ผลรวมสด</h2>
+      <div id="tally">ยังไม่ได้ publish</div>
+      <h2>นักศึกษา (<span id="count">0</span>)</h2>
+      <ul id="students"></ul>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let questions = [];
+    let activeId = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function connect() {
+      ws = new WebSocket(`ws://${location.host}`);
+      ws.onopen = () => { $('conn').textContent = ''; ws.send(JSON.stringify({ type: 'teacher:join' })); };
+      ws.onmessage = (e) => handle(JSON.parse(e.data));
+      ws.onclose = () => { $('conn').textContent = '(หลุด กำลังต่อใหม่...)'; setTimeout(connect, 2000); };
+    }
+
+    function handle(m) {
+      if (m.type === 'students') renderStudents(m.students);
+      else if (m.type === 'tally') renderTally(m);
+      else if (m.type === 'error') alert('error: ' + m.reason);
+    }
+
+    function renderStudents(list) {
+      $('count').textContent = list.length;
+      const ul = $('students');
+      ul.replaceChildren();
+      for (const s of list) {
+        const li = document.createElement('li');
+        li.textContent = s.name + (s.connected ? '' : ' (offline)');
+        if (!s.connected) li.className = 'off';
+        ul.appendChild(li);
+      }
+    }
+
+    function renderTally(t) {
+      activeId = t.questionId;
+      renderQuestions();
+      const q = questions.find((x) => x.id === t.questionId);
+      const box = $('tally');
+      box.replaceChildren();
+      const head = document.createElement('p');
+      head.textContent = `${t.questionId}: ตอบแล้ว ${t.answered} / ${t.total}`;
+      box.appendChild(head);
+      t.counts.forEach((n, i) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        const label = document.createElement('div');
+        label.textContent = `${q ? q.choices[i] : i + 1}: ${n}`;
+        const track = document.createElement('div');
+        track.className = 'track';
+        const fill = document.createElement('div');
+        fill.className = 'fill';
+        fill.style.width = (t.answered ? (n / t.answered) * 100 : 0) + '%';
+        track.appendChild(fill);
+        row.append(label, track);
+        box.appendChild(row);
+      });
+    }
+
+    function renderQuestions() {
+      const box = $('questions');
+      box.replaceChildren();
+      for (const q of questions) {
+        const div = document.createElement('div');
+        div.className = 'q' + (q.id === activeId ? ' active' : '');
+        const title = document.createElement('div');
+        title.textContent = `${q.id}: ${q.text}`;
+        const btn = document.createElement('button');
+        btn.textContent = 'Publish';
+        btn.onclick = () => ws.send(JSON.stringify({ type: 'publish', questionId: q.id }));
+        div.append(title, btn);
+        box.appendChild(div);
+      }
+    }
+
+    fetch('/questions.json').then((r) => r.json()).then((list) => {
+      questions = list;
+      renderQuestions();
+      connect();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Quiz - Student</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; }
+    button { display: block; width: 100%; padding: .8rem; margin: .5rem 0; font-size: 1rem; cursor: pointer; }
+    button:disabled { cursor: default; opacity: .6; }
+    button.picked { outline: 3px solid #2563eb; opacity: 1; }
+    input { padding: .6rem; font-size: 1rem; width: 70%; }
+    #status { color: #555; min-height: 1.5em; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Live Quiz</h1>
+
+  <form id="joinForm">
+    <input id="nameInput" placeholder="ชื่อของคุณ" maxlength="30" autofocus>
+    <button type="submit" style="display:inline;width:auto">Join</button>
+  </form>
+
+  <div id="quiz" class="hidden">
+    <p>สวัสดี <b id="me"></b></p>
+    <h2 id="qText">รออาจารย์ส่งโจทย์...</h2>
+    <div id="choices"></div>
+  </div>
+
+  <p id="status"></p>
+
+  <script>
+    let ws = null;
+    let myName = null;     // ชื่อที่ join สำเร็จแล้ว (ใช้ join ใหม่ตอนหลุด)
+    let question = null;   // โจทย์ปัจจุบัน
+    let answered = false;
+    let pendingChoice = null; // choice ที่ส่งไปแล้ว รอ server ตอบรับ
+
+    const $ = (id) => document.getElementById(id);
+    const setStatus = (t) => { $('status').textContent = t; };
+
+    function connect(name) {
+      ws = new WebSocket(`ws://${location.host}`);
+      ws.onopen = () => ws.send(JSON.stringify({ type: 'join', name }));
+      ws.onmessage = (e) => handle(JSON.parse(e.data));
+      ws.onclose = () => {
+        if (!myName) return;
+        setStatus('การเชื่อมต่อหลุด กำลังต่อใหม่...');
+        setTimeout(() => connect(myName), 2000); // reconnect = join ชื่อเดิม
+      };
+    }
+
+    function handle(m) {
+      switch (m.type) {
+        case 'joined':
+          myName = m.name;
+          $('joinForm').classList.add('hidden');
+          $('quiz').classList.remove('hidden');
+          $('me').textContent = m.name;
+          showQuestion(m.question, m.answered);
+          setStatus(m.answered ? 'คุณตอบข้อนี้แล้ว' : '');
+          break;
+        case 'question':
+          showQuestion(m.question, false);
+          setStatus('');
+          break;
+        case 'answer:accepted':
+          answered = true;
+          lockButtons();
+          if (pendingChoice !== null) $('choices').children[pendingChoice]?.classList.add('picked');
+          setStatus('ส่งคำตอบแล้ว');
+          break;
+        case 'answer:rejected':
+          if (m.reason === 'already_answered') { answered = true; lockButtons(); }
+          setStatus('ส่งคำตอบไม่สำเร็จ: ' + m.reason);
+          break;
+        case 'error':
+          if (!myName) { setStatus('Join ไม่สำเร็จ: ' + m.reason); ws.close(); }
+          else if (m.reason === 'name_taken') ws.close(); // reconnect ชน socket เก่าที่ยังไม่หลุด -> onclose จะลองใหม่ทุก 2 วิ
+          else setStatus('error: ' + m.reason);
+          break;
+      }
+    }
+
+    function showQuestion(q, isAnswered) {
+      question = q; answered = isAnswered; pendingChoice = null;
+      $('qText').textContent = q ? q.text : 'รออาจารย์ส่งโจทย์...';
+      const box = $('choices');
+      box.replaceChildren();
+      if (!q) return;
+      q.choices.forEach((text, i) => {
+        const b = document.createElement('button');
+        b.textContent = text;
+        b.onclick = () => {
+          pendingChoice = i;
+          ws.send(JSON.stringify({ type: 'answer', questionId: q.id, choice: i }));
+        };
+        b.disabled = isAnswered;
+        box.appendChild(b);
+      });
+    }
+
+    function lockButtons() {
+      for (const b of $('choices').children) b.disabled = true;
+    }
+
+    $('joinForm').onsubmit = (e) => {
+      e.preventDefault();
+      const name = $('nameInput').value.trim();
+      if (!name) return setStatus('กรุณาใส่ชื่อ');
+      if (ws) ws.close();
+      connect(name);
+    };
+  </script>
+</body>
+</html>
