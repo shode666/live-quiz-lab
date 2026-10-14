@@ -1,6 +1,6 @@
 # live-quiz-lab
 
-> **ทำ workshop: เปิด [LAB.md](LAB.md) แล้วทำตามทีละขั้น**
+> **ทำ workshop:** เปิด [LAB.md บน branch solution](https://github.com/shode666/live-quiz-lab/blob/solution/LAB.md) แล้วทำตามทีละขั้นบน branch `main` — อย่า checkout `solution` จนกว่าจะทำเสร็จ เพราะมีเฉลยอยู่
 
 เว็บ quiz ในห้องเรียน: อาจารย์ publish โจทย์ multiple choice ทีละข้อ นักศึกษาตอบผ่าน browser (WebSocket) และอาจารย์เห็นผลรวมคำตอบสด ตัวอย่างประกอบการบรรยาย "AI-Assisted Software Development: Using AI Agents in Practice"
 
