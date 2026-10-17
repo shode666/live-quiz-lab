@@ -2,6 +2,7 @@
 import express from 'express';
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { ClientToServer, Outbound, Question, ServerToClient } from './messages';
@@ -93,4 +94,11 @@ wss.on('connection', (ws) => {
 
 server.listen(PORT, () => {
   console.log(`live-quiz: http://localhost:${PORT}/teacher.html  |  http://localhost:${PORT}/student.html`);
+  for (const addrs of Object.values(os.networkInterfaces())) {
+    for (const a of addrs ?? []) {
+      if (a.family === 'IPv4' && !a.internal) {
+        console.log(`LAN:       http://${a.address}:${PORT}/teacher.html  |  http://${a.address}:${PORT}/student.html`);
+      }
+    }
+  }
 });
