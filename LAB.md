@@ -79,7 +79,7 @@ Constraints:
 
 Done when:
 - join ครั้งแรกได้ token กลับมาใน joined
-- join ชื่อเดิมพร้อม token ที่ถูก ได้สถานะเดิม (answered, คำตอบเดิม)
+- join ชื่อเดิมพร้อม token ที่ถูก ได้สถานะเดิม (answered)
 - join ชื่อเดิมแต่ token ผิดหรือไม่มี ได้ name_taken แม้เจ้าของจะ offline
 - refresh browser แล้วกลับเข้าห้องเองโดยไม่ต้องพิมพ์ชื่อ
 - มีเทสต์ใหม่ครอบทุกข้อ, npm test และ npm run typecheck ผ่าน
@@ -99,13 +99,14 @@ agent มักถามกลับก่อนลงมือ คำตอบ�
 - ชื่อที่มีในตารางแต่ token ยังว่าง (NULL) → คนแรกที่ join ได้ชื่อไปพร้อม token ใหม่
 - เทสต์ "refresh แล้วกลับเข้าห้องเอง" → ตรวจด้วยมือ ไม่ต้องเพิ่ม library สำหรับเทสต์ browser
 - ต้องเขียน ADR ใหม่ไหม → ไม่ต้อง บันทึกใน LLD พอ
+- ต้องไฮไลต์ปุ่มที่เคยเลือกไหม → ไม่ต้อง answered พอ
 
 ### 2.3 Implement
 
 ```text
 แผนโอเค ลงมือได้
 แก้ได้เฉพาะเทสต์เดิมที่ join ชื่อเดิมซ้ำโดยไม่ส่ง token (AC-1.4 ใน test/quiz.test.ts และใน test/persistence.test.ts) ให้ส่ง token เดิมเข้าไป assertion ห้ามเปลี่ยน เทสต์อื่นห้ามแตะ
-ชื่อที่ token เป็น NULL ให้คนแรกที่ join ได้ไปพร้อม token ใหม่ / refresh ตรวจด้วยมือ ไม่เพิ่ม library / ไม่ต้องเขียน ADR ใหม่
+ชื่อที่ token เป็น NULL ให้คนแรกที่ join ได้ไปพร้อม token ใหม่ / refresh ตรวจด้วยมือ ไม่เพิ่ม library / ไม่ต้องเขียน ADR ใหม่ / answered พอ ไม่ต้องไฮไลต์คำตอบเดิม
 ทำทีละขั้น commit เมื่อแต่ละขั้นผ่าน แล้วรัน npm test กับ npm run typecheck แสดง output จริงให้ดู
 ```
 
@@ -134,7 +135,7 @@ git diff main -- test
 | Feature | ระดับ | เวลา* | แตะส่วนไหน |
 |---|---|---|---|
 | A. เลือก Theme | ง่าย | 25–35 นาที | `public/*` เท่านั้น |
-| B. ตั้งเวลาก่อน publish | กลาง | 45–70 นาที | teacher.html, student.html, quiz.ts, db.ts, server.ts |
+| B. ตั้งเวลาก่อน publish | กลาง | 45–70 นาที | teacher.html, student.html, quiz.ts, db.ts, messages.ts, server.ts |
 | C. อาจารย์เพิ่ม / ลบโจทย์ | กลาง | 45–60 นาที | teacher.html, quiz.ts, db.ts, messages.ts, server.ts |
 | D. หน้ารวมคะแนน | ยาก | 60–90 นาที | ทุกชั้น รวม schema |
 
@@ -168,6 +169,7 @@ agent ชอบทำเกิน: ThemeManager class, ไฟล์ CSS แย�
 - publish ข้อใหม่ก่อนหมดเวลา → timer เก่าต้องไม่ไปปิดข้อใหม่
 
 ต้องมีเทสต์ฝั่ง server: ใช้ `startServer()` แบบใน `test/server.test.ts` (helper `connect()` อยู่ใน `test/helpers.ts`) กับ `vi.useFakeTimers()` พิสูจน์ว่า server ปิดเองและปฏิเสธคำตอบที่มาช้า — แค่ disable ปุ่มฝั่ง browser ไม่นับ นักศึกษายังส่งผ่าน devtools ได้
+fake เฉพาะ `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })` แล้วเดินเวลาด้วย `await vi.advanceTimersByTimeAsync(ms)` — fake ทั้งหมดแล้ว socket ค้าง
 
 agent ชอบทำเกิน: Timer class / map ของ timer หลายตัว (ต้องการแค่ตัวเดียว), grace period, clock sync, ปุ่มปิดก่อนเวลา, ตารางใหม่สำหรับเวลา
 
@@ -180,6 +182,7 @@ agent ชอบทำเกิน: Timer class / map ของ timer หลา�
 - **ลบข้อที่กำลังเปิดอยู่ได้ไหม** ถ้าได้ ต้องเกิดอะไรกับนักศึกษาที่กำลังตอบ — ถ้าข้ามเรื่องนี้ server จะพัง
 - id ของโจทย์ใหม่สร้างยังไงให้ไม่ชนหลังมีการลบ
 - ใครส่งคำสั่งเพิ่ม/ลบได้ (`server.ts` รู้อยู่แล้วว่า socket ไหนเป็นอาจารย์)
+- หน้าอาจารย์หลุดแล้วต่อใหม่ (ไม่ได้ reload) รายการโจทย์บนจอยังเป็นของเก่าไหม
 
 agent ชอบทำเกิน: REST API แยก, แก้ไข/เรียงลำดับโจทย์, migration framework, ตัวนับ id max+1, modal แทน `confirm()`
 
@@ -191,8 +194,10 @@ agent ชอบทำเกิน: REST API แยก, แก้ไข/เรี
 - เก็บเฉลยไว้ที่ไหนไม่ให้รั่ว — ลองดูว่า `GET /questions.json` ส่งอะไรออกไปบ้าง
 - คำตอบของข้อก่อน ๆ ยังอยู่ไหมตอน publish ข้อใหม่ (อ่าน `src/db.ts` ให้ดี) — scoreboard ต้องมีประวัติ
 - หลังเฉลยแล้ว ยังตอบได้ไหม / คนที่ join ทีหลังเห็นเฉลยไหม
-- นักศึกษารู้ไหมว่าตัวเองตอบถูกหรือผิด (ไม่ใช่แค่เห็นว่าข้อไหนถูก)
+- นักศึกษารู้ไหมว่าตัวเองตอบถูกหรือผิด (ไม่ใช่แค่เห็นว่าข้อไหนถูก) — แล้วถ้า refresh ก่อนอาจารย์กดเฉลยล่ะ (browser ลืมว่าเลือกข้อไหน server ต้องบอก)
 - เปลี่ยน schema แล้ว `data/live-quiz.db` ที่ commit ไว้ต้องทำยังไง
+- `docs/01-prd.md` §3 เขียนว่าไม่ทำคะแนน — feature นี้ทับข้อนั้น ให้ agent จดไว้ที่หัว docs/features/scoreboard.md ไม่ต้องแก้ PRD
+- โจทย์ใน `data/live-quiz.db` ยังไม่มีเฉลย — ใส่เฉลยเป็น commit แยก (กฎใน AGENTS.md)
 
 ต้องมีเทสต์ที่พิสูจน์ว่าเฉลย **ไม่อยู่ใน message ใดที่ถึงนักศึกษา และไม่อยู่ใน `/questions.json`** ก่อนเฉลย
 
@@ -285,6 +290,7 @@ $env:PORT=3001; $env:DB_PATH="$env:TEMP\live-quiz-try.db"; npm start
 ```
 
 หยุดด้วย Ctrl+C (หรือ kill ด้วย PID) — อย่าใช้ `pkill` / `killall` เพราะจะฆ่า server หลักไปด้วย
+ถ้าใช้ kill: kill PID แล้วเช็คว่า port ว่างจริง (`lsof -i :3001` บน macOS/Linux) ถ้ายังมี process ฟังอยู่ kill PID นั้นด้วย
 
 ---
 
