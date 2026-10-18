@@ -22,10 +22,9 @@ function toPublic(q: Question): PublicQuestion {
 }
 
 // state ทำงานใน memory (Map) แต่ทุกการเปลี่ยนแปลงเขียนลง SQLite ทันที และโหลดกลับตอนสร้าง (ADR-004)
-// seed = โจทย์เริ่มต้น ใช้เฉพาะเมื่อตาราง questions ยังว่าง
-export function createQuiz(db: DatabaseSync, seed: Question[] = []) {
+// โจทย์อยู่ในตาราง questions ของ db (ไม่มี seed) — ตารางว่าง = ไม่มีโจทย์
+export function createQuiz(db: DatabaseSync) {
   const store = createStore(db);
-  store.seedQuestions(seed);
   store.resetConnected(); // socket ไม่รอด restart
   const snap = store.load();
   const state: QuizState = {

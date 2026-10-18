@@ -1,23 +1,22 @@
 // I/O เท่านั้น: Express static + ws wiring — กฎทั้งหมดอยู่ใน quiz.ts
 import express from 'express';
-import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { WebSocket, WebSocketServer } from 'ws';
-import type { ClientToServer, Outbound, Question, ServerToClient } from './messages';
+import type { ClientToServer, Outbound, ServerToClient } from './messages';
 import { DEFAULT_DB_PATH, openDb } from './db';
 import { createQuiz } from './quiz';
 
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = path.join(__dirname, '..');
 
-const questions: Question[] = JSON.parse(fs.readFileSync(path.join(ROOT, 'questions.json'), 'utf8'));
-const quiz = createQuiz(openDb(process.env.DB_PATH || DEFAULT_DB_PATH), questions); // questions = seed รันครั้งแรกเท่านั้น
+const quiz = createQuiz(openDb(process.env.DB_PATH || DEFAULT_DB_PATH));
 
 const app = express();
 app.use(express.static(path.join(ROOT, 'public')));
-app.get('/questions.json', (_req, res) => res.sendFile(path.join(ROOT, 'questions.json')));
+// teacher.html โหลดรายการโจทย์จากที่นี่ (public/ ไม่เปลี่ยน) — ข้อมูลมาจากตาราง questions
+app.get('/questions.json', (_req, res) => res.json(quiz.state.questions));
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });

@@ -38,7 +38,7 @@ Legend: **I1** = Iteration 1 (base app) · **I2** = Iteration 2 (ทำสดใ
 - AC-1.4 **Given** student ชื่อ A หลุด (socket ปิด) **When** A join ใหม่ด้วยชื่อเดิม **Then** ได้สถานะเดิมกลับ (คำตอบที่ส่งไว้ยังอยู่) และได้โจทย์ปัจจุบันถ้ามี
 
 ### FR-2 (I1) Teacher publish โจทย์ตาม question id
-- AC-2.1 **Given** `questions.json` มี id `q3` **When** teacher ส่ง `publish q3` **Then** student ทุกคนที่ต่ออยู่ได้ `question` (text + choices, ไม่มีคำตอบ) และ teacher ได้ `tally` เริ่มต้น (ทุกช่อง 0)
+- AC-2.1 **Given** ตาราง `questions` ใน DB มี id `q3` **When** teacher ส่ง `publish q3` **Then** student ทุกคนที่ต่ออยู่ได้ `question` (text + choices, ไม่มีคำตอบ) และ teacher ได้ `tally` เริ่มต้น (ทุกช่อง 0)
 - AC-2.2 **Given** id ไม่มีในไฟล์ **When** publish **Then** teacher ได้ `error` reason `unknown_question`
 - AC-2.3 **Given** กำลังมีโจทย์ q3 **When** publish q4 **Then** q4 กลายเป็น current; คำตอบ q3 ที่มาหลังจากนี้ถูกปฏิเสธ (ดู FR-3)
 
@@ -87,5 +87,5 @@ Legend: **I1** = Iteration 1 (base app) · **I2** = Iteration 2 (ทำสดใ
 
 ## 7. Open questions
 
-- OQ-1 `questions.json` ควรมี field `correct` เพื่อให้ teacher เห็นว่าช่องไหนถูกไหม? (ตอนนี้ไม่ใส่ — ไม่อยู่ใน brief) → ผู้ตัดสิน: อาจารย์เจ้าของคาบ
+- OQ-1 โจทย์ (ตาราง `questions`) ควรมี field `correct` เพื่อให้ teacher เห็นว่าช่องไหนถูกไหม? (ตอนนี้ไม่ใส่ — ไม่อยู่ใน brief) → ผู้ตัดสิน: อาจารย์เจ้าของคาบ
 - OQ-2 เมื่อ student หลุดระหว่างคาบ ควรลบชื่อออกจากรายชื่อ หรือแสดงเป็น "offline"? (ตอนนี้: แสดง offline, ไม่ลบ) → ผู้ตัดสิน: อาจารย์

@@ -11,13 +11,12 @@
 
 | Component | หน้าที่ | ที่อยู่ |
 |---|---|---|
-| **Express static server** | เสิร์ฟ `teacher.html`, `student.html`, `questions.json` (teacher เท่านั้นที่ใช้) | `src/server.ts` |
+| **Express static server** | เสิร์ฟ `teacher.html`, `student.html`, `GET /questions.json` (รายการโจทย์จาก DB; teacher เท่านั้นที่ใช้) | `src/server.ts` |
 | **WebSocket server (ws)** | รับ connection, แปลง JSON ↔ message, จำว่า socket ไหนเป็น teacher/student ชื่ออะไร, ส่ง outbound ไปปลายทาง | `src/server.ts` |
 | **Quiz state module** | state ของห้อง + กฎทั้งหมด (join / publish / answer / close) — **ไม่รู้จัก socket** · เขียนทุกการเปลี่ยนแปลงลง SQLite | `src/quiz.ts` |
 | **SQLite (`node:sqlite`)** | เก็บโจทย์ นักศึกษา ข้อปัจจุบัน คำตอบ ข้าม restart · SQL อยู่ที่เดียว | `src/db.ts`, `data/live-quiz.db` |
 | **Teacher page** | เลือกข้อ → publish · แสดง students + tally · (I2) slider เวลา | `public/teacher.html` |
 | **Student page** | ใส่ชื่อ → join · แสดงโจทย์ · ปุ่มตอบ · (I2) นับถอยหลัง | `public/student.html` |
-| **questions.json** | โจทย์ที่เตรียมไว้ `[ {id, text, choices[]} ]` | `questions.json` |
 
 ## 3. Diagram
 
@@ -27,7 +26,6 @@ flowchart LR
   ST1[student.html x50] -- ws --> S
   subgraph Node process :3000
     S[server.ts<br/>Express static + ws<br/>socket<->role map<br/>timer I2] --> Q[quiz.ts<br/>state + rules<br/>pure functions]
-    S -. seed ครั้งแรก .-> J[(questions.json)]
     Q <--> D[(SQLite data/live-quiz.db)]
   end
 ```

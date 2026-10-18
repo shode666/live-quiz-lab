@@ -9,8 +9,8 @@
 live-quiz/
 ├── package.json          # scripts: start (tsx src/server.ts), test (vitest), reset (ลบ DB)
 ├── tsconfig.json
-├── questions.json        # seed: [{ "id": "q1", "text": "...", "choices": ["A","B","C","D"] }]
-├── data/live-quiz.db     # SQLite (gitignored, DB_PATH override)
+├── scripts/reset.ts      # npm run reset: ลบ students/answers/current (เก็บ questions)
+├── data/live-quiz.db     # SQLite ที่ commit ไว้ (มีโจทย์ในตาราง questions, DB_PATH override)
 ├── src/
 │   ├── quiz.ts           # state + กฎ — ไม่ import ws/express
 │   ├── db.ts             # node:sqlite: openDb + createStore (SQL ทั้งหมด)
@@ -24,9 +24,9 @@ live-quiz/
 ```
 
 หน้าที่ต่อไฟล์
-- `quiz.ts` — `createQuiz(db, seed?)` (db = `DatabaseSync`; seed = โจทย์เริ่มต้น) คืน object ที่มี `state` และ handlers (§4) · ทุก handler **คืน list ของ outbound messages** ไม่ส่งเอง
-- `server.ts` — อ่าน `questions.json` → `openDb(DB_PATH)` → `createQuiz(db, questions)` → เปิด Express (`public/` + `/questions.json`) → เปิด `ws` บน server เดียวกัน (port 3000) → ต่อ socket: parse JSON → เรียก handler → ส่ง outbound ตาม `to` → `close` เรียก `disconnect`
-- `db.ts` — `openDb(file)` สร้างโฟลเดอร์/ไฟล์ + `CREATE TABLE IF NOT EXISTS` (questions, students, current, answers) · `createStore(db)` = SQL ทั้งหมด: seed โจทย์ถ้าตารางว่าง, `resetConnected`, `load`, `saveStudent`, `setCurrent` (เคลียร์ answers ใน transaction), `saveAnswer`
+- `quiz.ts` — `createQuiz(db)` (db = `DatabaseSync`; โจทย์โหลดจากตาราง questions) คืน object ที่มี `state` และ handlers (§4) · ทุก handler **คืน list ของ outbound messages** ไม่ส่งเอง
+- `server.ts` — `openDb(DB_PATH)` → `createQuiz(db)` → เปิด Express (`public/` + `GET /questions.json` ตอบรายการโจทย์จาก DB) → เปิด `ws` บน server เดียวกัน (port 3000) → ต่อ socket: parse JSON → เรียก handler → ส่ง outbound ตาม `to` → `close` เรียก `disconnect`
+- `db.ts` — `openDb(file)` สร้างโฟลเดอร์/ไฟล์ + `CREATE TABLE IF NOT EXISTS` (questions, students, current, answers) · `createStore(db)` = SQL ทั้งหมด: `resetConnected`, `load`, `saveStudent`, `setCurrent` (เคลียร์ answers ใน transaction), `saveAnswer`
 - `messages.ts` — types เท่านั้น ให้ทั้ง `quiz.ts`, `server.ts`, test ใช้ร่วมกัน
 
 ## 2. State model (`quiz.ts`)
@@ -35,7 +35,7 @@ live-quiz/
 type Student = { name: string; connected: boolean };
 
 type QuizState = {
-  questions: Question[];                 // จาก questions.json (read-only)
+  questions: Question[];                 // จากตาราง questions (read-only)
   students: Map<string, Student>;        // key = name
   current: {
     questionId: string;
@@ -155,7 +155,7 @@ closeQuestion(questionId: string): Outbound[]      // I2 — เรียกโ�
 
 ### Persistence (ADR-004) — `test/persistence.test.ts`
 
-สร้าง `createQuiz` ใหม่บน db `:memory:` เดิม = จำลอง restart: students/current/answers/tally กู้คืน · `connected` รีเซ็ตเป็น false · publish ทับแล้วคำตอบเก่าไม่กลับมา · seed เฉพาะตอนตาราง questions ว่าง
+สร้าง `createQuiz` ใหม่บน db `:memory:` เดิม = จำลอง restart: students/current/answers/tally กู้คืน · `connected` รีเซ็ตเป็น false · publish ทับแล้วคำตอบเก่าไม่กลับมา · โจทย์โหลดจากตาราง questions; db ไม่มีโจทย์ = ไม่มีโจทย์ (ไม่มี seed)
 
 ### Iteration 2 — tests ที่ต้อง **เพิ่ม** (ห้ามแก้ test เดิมให้ fail)
 

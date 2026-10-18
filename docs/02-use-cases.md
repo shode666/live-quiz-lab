@@ -22,7 +22,7 @@
 
 **Main flow**
 1. Teacher เปิด `teacher.html` → socket ส่ง `teacher:join` → ได้ `students` + `tally` ปัจจุบัน
-2. Teacher เลือก question id จากรายการ (โหลดจาก `questions.json`) กด Publish → `publish {questionId}`
+2. Teacher เลือก question id จากรายการ (โหลดจาก `GET /questions.json` ซึ่งอ่านจากตาราง `questions`) กด Publish → `publish {questionId}`
 3. Server ตั้ง current = question นั้น, เคลียร์คำตอบ, broadcast `question` ให้ทุก student, ส่ง `tally` (ศูนย์) ให้ Teacher
 
 **Alternate / edge**

@@ -3,4 +3,6 @@ dist/
 *.log
 .env
 .DS_Store
-data/
+data/*.db-wal
+data/*.db-shm
+data/*-journal

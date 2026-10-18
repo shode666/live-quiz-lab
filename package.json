@@ -12,7 +12,7 @@
     "start": "tsx src/server.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "reset": "node -e \"const f=process.env.DB_PATH||'data/live-quiz.db';for(const x of [f,f+'-wal',f+'-shm'])require('fs').rmSync(x,{force:true})\""
+    "reset": "tsx scripts/reset.ts"
   },
   "dependencies": {
     "express": "^5.3.0",

@@ -11,7 +11,7 @@ Node.js 22.13+ · TypeScript · Express · ws · vitest · frontend = HTML + van
 | รันปกติ | `npm start` (port 3000, เปลี่ยนด้วย `PORT=...`) |
 | เทสต์ | `npm test` |
 | ตรวจ type | `npm run typecheck` |
-| เริ่มคาบใหม่ (ลบ DB) | `npm run reset` |
+| เริ่มคาบใหม่ (ลบ students/answers/current เก็บโจทย์; หรือ `git checkout data/live-quiz.db`) | `npm run reset` |
 
 ## Folder layout
 ```
@@ -21,10 +21,13 @@ src/messages.ts   TypeScript types ของ WebSocket contract
 src/server.ts     Express static + ws wiring (I/O เท่านั้น)
 public/           teacher.html, student.html
 test/quiz.test.ts vitest (ไม่เปิด socket)
-questions.json    โจทย์ [{id, text, choices[]}] — seed เข้า DB ตอนรันครั้งแรก
-data/             live-quiz.db (gitignored, เปลี่ยน path ด้วย DB_PATH)
+scripts/reset.ts  เริ่มคาบใหม่ (ลบ students/answers/current)
+data/live-quiz.db SQLite ที่ commit ไว้ — โจทย์อยู่ในตาราง questions (เปลี่ยน path ด้วย DB_PATH)
 docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้างอิง design
 ```
+
+## ดู/แก้โจทย์
+ตาราง `questions(pos, id, text, choices)` ใน `data/live-quiz.db` (`choices` = JSON array): `sqlite3 data/live-quiz.db` (ถ้ามี) หรือ `node -e` กับ `node:sqlite` (ตัวอย่างใน README)
 
 ## Rules
 - ห้ามเพิ่ม dependency โดยไม่ถาม

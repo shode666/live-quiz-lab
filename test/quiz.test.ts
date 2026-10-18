@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Outbound, Question } from '../src/messages';
-import { openDb } from '../src/db';
+import type { Outbound } from '../src/messages';
+import { openTestDb } from './fixtures';
 import { createQuiz, type Quiz } from '../src/quiz';
-
-const questions: Question[] = [
-  { id: 'q3', text: 'Q3?', choices: ['a', 'b', 'c', 'd'] },
-  { id: 'q4', text: 'Q4?', choices: ['x', 'y'] },
-];
 
 // helper: หา message ตาม to + type
 const find = (out: Outbound[], to: Outbound['to'], type: string) =>
@@ -14,7 +9,7 @@ const find = (out: Outbound[], to: Outbound['to'], type: string) =>
 
 let quiz: Quiz;
 beforeEach(() => {
-  quiz = createQuiz(openDb(':memory:'), questions);
+  quiz = createQuiz(openTestDb());
 });
 
 describe('FR-1 join', () => {

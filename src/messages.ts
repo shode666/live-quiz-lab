@@ -13,7 +13,7 @@ export type TeacherToServer =
 export type ClientToServer = StudentToServer | TeacherToServer;
 
 // ---------- โจทย์ ----------
-// รูปแบบใน questions.json (ไม่มีเฉลย)
+// รูปแบบโจทย์ (ตาราง questions) (ไม่มีเฉลย)
 export type Question = { id: string; text: string; choices: string[] };
 // รูปแบบที่ส่งให้ student
 export type PublicQuestion = { id: string; text: string; choices: string[] };

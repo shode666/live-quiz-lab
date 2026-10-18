@@ -1,25 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { openDb } from '../src/db';
-import type { Outbound, Question } from '../src/messages';
+import { openTestDb, questions } from './fixtures';
+import type { Outbound } from '../src/messages';
 import { createQuiz } from '../src/quiz';
 
-const questions: Question[] = [
-  { id: 'q3', text: 'Q3?', choices: ['a', 'b', 'c', 'd'] },
-  { id: 'q4', text: 'Q4?', choices: ['x', 'y'] },
-];
 const find = (out: Outbound[], to: Outbound['to'], type: string) =>
   out.find((o) => o.to === to && o.msg.type === type)?.msg as any;
 
 describe('ADR-004 persistence (สร้าง quiz ใหม่บน db เดิม = restart)', () => {
   it('students, current, answers และ tally ถูกกู้คืน', () => {
-    const db = openDb(':memory:');
-    const first = createQuiz(db, questions);
+    const db = openTestDb();
+    const first = createQuiz(db);
     first.join('A');
     first.join('B');
     first.publish('q3');
     first.answer('A', 'q3', 2);
 
-    const second = createQuiz(db, questions);
+    const second = createQuiz(db);
     const joined = find(second.join('A'), 'self', 'joined');
     expect(joined.answered).toBe(true);
     expect(joined.question).toEqual({ id: 'q3', text: 'Q3?', choices: ['a', 'b', 'c', 'd'] });
@@ -31,13 +28,13 @@ describe('ADR-004 persistence (สร้าง quiz ใหม่บน db เด
   });
 
   it('connected รีเซ็ตเป็น false ตอน startup และ join ชื่อเดิมได้ (ไม่ใช่ name_taken)', () => {
-    const db = openDb(':memory:');
-    const first = createQuiz(db, questions);
+    const db = openTestDb();
+    const first = createQuiz(db);
     first.join('A');
     first.join('B');
     first.disconnect('B');
 
-    const second = createQuiz(db, questions);
+    const second = createQuiz(db);
     expect(find(second.teacherJoin(), 'teacher', 'students').students).toEqual([
       { name: 'A', connected: false },
       { name: 'B', connected: false },
@@ -46,27 +43,28 @@ describe('ADR-004 persistence (สร้าง quiz ใหม่บน db เด
   });
 
   it('publish ทับข้อเดิม -> คำตอบเก่าไม่กลับมาหลัง restart', () => {
-    const db = openDb(':memory:');
-    const first = createQuiz(db, questions);
+    const db = openTestDb();
+    const first = createQuiz(db);
     first.join('A');
     first.publish('q3');
     first.answer('A', 'q3', 1);
     first.publish('q4');
 
-    const second = createQuiz(db, questions);
+    const second = createQuiz(db);
     expect(second.state.current).toEqual({ questionId: 'q4', answers: new Map() });
   });
 
   it('ยังไม่ publish -> current เป็น null หลัง restart', () => {
-    const db = openDb(':memory:');
-    createQuiz(db, questions).join('A');
-    expect(createQuiz(db, questions).state.current).toBeNull();
+    const db = openTestDb();
+    createQuiz(db).join('A');
+    expect(createQuiz(db).state.current).toBeNull();
   });
 
-  it('seed เฉพาะตอนตาราง questions ว่าง; รอบสองใช้โจทย์ใน db', () => {
-    const db = openDb(':memory:');
-    createQuiz(db, questions);
-    const second = createQuiz(db, [{ id: 'zz', text: 'other', choices: ['1'] }]);
-    expect(second.state.questions).toEqual(questions);
+  it('โจทย์ถูกโหลดจากตาราง questions ของ db', () => {
+    expect(createQuiz(openTestDb()).state.questions).toEqual(questions);
+  });
+
+  it('db ไม่มีโจทย์ = ไม่มีโจทย์ (ไม่มี seed)', () => {
+    expect(createQuiz(openDb(':memory:')).state.questions).toEqual([]);
   });
 });

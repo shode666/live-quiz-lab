@@ -28,13 +28,17 @@ npm start          # เปิดที่ port 3000 (เปลี่ยนด�
 
 ตอนเริ่ม server จะพิมพ์ LAN URL (`LAN:`) ของเครื่องอาจารย์ให้ นำไปแจกนักศึกษาได้เลย
 
-แก้โจทย์ที่ `questions.json` (รูปแบบ `{ "id", "text", "choices": [...] }`, ไม่มีเฉลย) — ไฟล์นี้เป็น seed: อ่านเข้า DB เฉพาะตอนรันครั้งแรก ถ้าแก้ทีหลังให้ `npm run reset` ก่อน
+โจทย์อยู่ในตาราง `questions` (`id`, `text`, `choices` = JSON array, ไม่มีเฉลย) ของไฟล์ `data/live-quiz.db` ซึ่งถูก commit ไว้ใน repo พร้อมโจทย์ 5 ข้อ ดู/แก้ได้ด้วย `sqlite3 data/live-quiz.db` (ถ้ามี) หรือ `node:sqlite`:
+
+```
+node -e "const {DatabaseSync}=require('node:sqlite');console.table(new DatabaseSync('data/live-quiz.db').prepare('SELECT id,text FROM questions').all())"
+```
 
 ## ข้อควรรู้ (LAN / ไม่มี auth)
 
 - ออกแบบให้ใช้ใน LAN ห้องเรียนเท่านั้น **ไม่มี login** — ใครเปิด `teacher.html` ก็ publish ได้ ห้ามเปิดสู่ internet
 - restart server (รวมถึง `npm run dev` ที่ reload ทุกครั้งที่แก้โค้ด) ไม่ทำให้ state หาย: รายชื่อ นักศึกษา ข้อปัจจุบัน และคำตอบอยู่ใน DB; นักศึกษาที่เปิดหน้าค้างไว้ต้อง reconnect/join ชื่อเดิม
-- เริ่มคาบใหม่ = `npm run reset` (ลบไฟล์ DB) แล้วรัน server ใหม่
+- เริ่มคาบใหม่ = `npm run reset` (ลบ students/answers/current เก็บโจทย์) หรือ `git checkout data/live-quiz.db` เพื่อกลับสู่สถานะตั้งต้น แล้วรัน server ใหม่
 - รายละเอียดและเหตุผลอยู่ใน `docs/04-adr/ADR-004-sqlite-state.md`
 
 เอกสาร design ทั้งหมดอยู่ใน `docs/` (เริ่มที่ `01-prd.md` และ `05-lld.md`)

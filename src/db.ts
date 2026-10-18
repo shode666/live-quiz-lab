@@ -11,6 +11,7 @@ export const DEFAULT_DB_PATH = path.join(__dirname, '..', 'data', 'live-quiz.db'
 export function openDb(file: string): DatabaseSync {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
+  db.exec('PRAGMA journal_mode = DELETE'); // ไฟล์เดียว (ไม่มี -wal/-shm) เพราะ db ถูก commit ใน repo
   db.exec(`
     CREATE TABLE IF NOT EXISTS questions (
       pos     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,16 +54,6 @@ export function createStore(db: DatabaseSync) {
   };
 
   return {
-    // ตารางโจทย์ว่าง (รันครั้งแรก) -> import จาก seed
-    seedQuestions(seed: Question[]) {
-      const { n } = db.prepare('SELECT COUNT(*) AS n FROM questions').get() as { n: number };
-      if (n > 0) return;
-      const insert = db.prepare('INSERT INTO questions (id, text, choices) VALUES (?, ?, ?)');
-      transaction(() => {
-        for (const q of seed) insert.run(q.id, q.text, JSON.stringify(q.choices));
-      });
-    },
-
     // เริ่ม process ใหม่: socket เดิมหายหมด -> ทุกคน offline
     resetConnected() {
       db.exec('UPDATE students SET connected = 0');

@@ -14,7 +14,7 @@
 | C. `better-sqlite3` | เสถียร, API ใกล้เคียง | native dependency ต้อง build/ดาวน์โหลด binary, ผิดกฎ "ห้ามเพิ่ม dependency" |
 
 ## Decision
-เลือก **B** · `src/db.ts` เป็นที่เดียวที่มี SQL (`CREATE TABLE IF NOT EXISTS`, ไม่มี ORM/migration) · `quiz.ts` รับ db handle, ถือ working copy ใน memory และ write-through ลง DB; โหลดกลับตอนสร้าง · ไฟล์ `data/live-quiz.db` (`DB_PATH` override) · โจทย์ seed จาก `questions.json` เมื่อตารางว่าง · `connected` รีเซ็ตเป็น false ตอน startup · เริ่มคาบใหม่ = `npm run reset`
+เลือก **B** · `src/db.ts` เป็นที่เดียวที่มี SQL (`CREATE TABLE IF NOT EXISTS`, ไม่มี ORM/migration) · `quiz.ts` รับ db handle, ถือ working copy ใน memory และ write-through ลง DB; โหลดกลับตอนสร้าง · ไฟล์ `data/live-quiz.db` (`DB_PATH` override) **commit อยู่ใน repo** พร้อมโจทย์ในตาราง `questions` (ไม่มี `questions.json`/seed; `journal_mode=DELETE` เป็นไฟล์เดียว) · `connected` รีเซ็ตเป็น false ตอน startup · เริ่มคาบใหม่ = `npm run reset` (ลบ students/answers/current เก็บโจทย์) หรือ `git checkout data/live-quiz.db`
 
 ## Accepted risks
 | Risk | ผลกระทบ | เหตุผลที่ยอมรับ |
@@ -22,7 +22,7 @@
 | ยังไม่มี auth | ใครรู้ URL ก็ publish ได้ | LAN ห้องเรียน (เหมือน ADR-002) |
 | 1 process เท่านั้น | เปิดหลาย process บนไฟล์เดียวกัน state จะไม่ตรงกัน | ใช้ 1 ห้อง 1 เครื่อง |
 | `node:sqlite` experimental | API เปลี่ยนได้, พิมพ์ ExperimentalWarning | ใช้ผิว API น้อย (`exec/prepare/run/get/all`) |
-| แก้ `questions.json` หลังรันแล้วไม่มีผล | โจทย์ใน DB ไม่อัปเดต | `npm run reset` เพื่อ seed ใหม่ |
+| db เป็นไฟล์ binary ใน git | git status แสดง modified หลังรัน | นักศึกษา push ไม่ได้ จึงไม่กระทบ |
 
 ## Consequences
 - (+) restart/reload ไม่ทำให้ state หาย, test ใช้ `:memory:` ไม่ต้องมีไฟล์
