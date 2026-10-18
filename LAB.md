@@ -148,7 +148,9 @@ git diff main -- test
 - ทำไง reload แล้วไม่กะพริบเป็น Minimal ก่อน (โหลดสคริปต์ตรงไหน)
 - ค่าใน localStorage เสียหรือใช้ไม่ได้ → ทำอะไร
 
-กับดัก: บนพื้นกระจก ตัวอักษรจางจนอ่านไม่ออก โดยเฉพาะปุ่มที่ถูก disable — ต้อง **ดูทุก theme ด้วยตา** ทั้งจอมือถือ (devtools → toggle device) และจอใหญ่ ก่อนบอกว่าเสร็จ
+กับดัก: บนพื้นกระจก ตัวอักษรจางจนอ่านไม่ออก โดยเฉพาะปุ่มที่ถูก disable — ต้อง **ดูทุก theme ด้วยตา** ทั้งจอมือถือ (devtools → toggle device) และจอใหญ่ และเลื่อนลงจนสุดหน้า (พื้นหลัง gradient มักไม่เต็มหน้า) ก่อนบอกว่าเสร็จ
+
+feature นี้แตะแค่ CSS/JS ฝั่ง browser — AC ตรวจด้วยมือได้ ไม่ต้องเขียนเทสต์ (agent จะถาม ตอบว่า "ตรวจมือ")
 
 agent ชอบทำเกิน: ThemeManager class, ไฟล์ CSS แยกต่อ theme, dark mode, เก็บ theme ที่ server, เขียนเทสต์ให้ CSS
 
@@ -294,6 +296,29 @@ $env:PORT=3001; $env:DB_PATH="$env:TEMP\live-quiz-try.db"; npm start
 2. เพิ่ม rule 1 ข้อใน `AGENTS.md` จากสิ่งที่เจอ ครั้งหน้ามันจะไม่ทำอีก
 
 **ทำต่อที่บ้าน:** ทำ feature ที่เลือกให้จบ หรือเลือก feature ถัดไปจากเมนู แล้วลองใช้ workflow เดียวกันกับ senior project ของตัวเอง
+
+---
+
+## ยังขาดอะไรถึงจะเป็น production grade
+
+แอปนี้ตั้งใจให้เล็กพอสำหรับห้องเรียน 1 ห้องใน LAN ถ้าจะใช้จริงกับคนจำนวนมากบน internet ยังขาด — ลองเลือกสักข้อเป็นโจทย์ต่อด้วย workflow เดียวกัน
+
+| ด้าน | ตอนนี้ | ที่ต้องมีเพิ่ม |
+|---|---|---|
+| ยืนยันตัวตน | ใครส่ง `teacher:join` ก็เป็นอาจารย์ได้ / นักศึกษายืนยันด้วย token สุ่มอย่างเดียว | login อาจารย์ (หรือ PIN ต่อห้อง), session หมดอายุ, ผูกนักศึกษากับบัญชีมหาวิทยาลัย (SSO) |
+| การเชื่อมต่อ | HTTP / WS ธรรมดาใน LAN | HTTPS / WSS, reverse proxy, ตรวจ Origin ของ WebSocket |
+| ป้องกันการใช้ผิด | ไม่จำกัดอะไร | rate limit ต่อ IP/ต่อ socket, จำกัดขนาด message, จำนวน connection สูงสุด |
+| หลายห้อง | ห้องเดียวต่อ server | room/session id, หลายอาจารย์พร้อมกัน, ปิดห้องเมื่อจบคาบ |
+| ข้อมูล | SQLite ไฟล์เดียว commit ใน repo, ไม่มี backup | ฐานข้อมูลแยกจากโค้ด, backup + restore ที่ซ้อมแล้ว, migration แบบมี version |
+| ขยายระบบ | process เดียว state อยู่ใน memory คู่กับ db | หลาย instance ต้องมี shared state / pub-sub, health check, graceful shutdown |
+| คุณภาพ | unit + integration test | e2e test ใน browser จริง (Playwright), load test (~ห้องละ 200 คน), CI รันเทสต์ทุก PR |
+| ส่งขึ้นใช้งาน | `npm start` บนเครื่องอาจารย์ | build เป็น Docker image, config ผ่าน env, deploy pipeline, rollback ได้ |
+| สังเกตการณ์ | `console.log` | log แบบมีโครงสร้าง, metrics (จำนวน connection, latency), alert เมื่อ error พุ่ง |
+| ความปลอดภัยหน้าเว็บ | ไม่มี header พิเศษ | Content-Security-Policy, escape ข้อความทุกจุดที่แสดงโจทย์/ชื่อ, dependency audit |
+| ข้อมูลส่วนบุคคล | เก็บชื่อและคำตอบไม่มีกำหนดลบ | แจ้งวัตถุประสงค์ตาม PDPA, กำหนดระยะเวลาเก็บแล้วลบ, export/ลบข้อมูลเมื่อขอ |
+| การเข้าถึง | ธีม minimal อ่านง่ายระดับหนึ่ง | ตรวจ WCAG 2.2 AA, ใช้ keyboard/screen reader ได้, รองรับหลายภาษา |
+
+ข้อสังเกต: เกือบทุกข้อในตารางนี้ agent ช่วยเขียนโค้ดได้ แต่ **การตัดสินใจ** ว่าจะเอาระดับไหน (เช่น ต้องรองรับกี่คน เก็บข้อมูลนานแค่ไหน) ยังเป็นงานของคน
 
 ---
 
