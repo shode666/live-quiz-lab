@@ -24,7 +24,7 @@ Iteration 2 เพิ่มเวลาจำกัดต่อข้อ 10–12
 - (+) late answer ถูกปฏิเสธเสมอแม้ browser จะยังโชว์เวลาเหลือ (AC-7.2)
 - (+) ยกเลิก timer ตอน publish ใหม่เป็น logic เดียวจุดเดียว (AC-7.3)
 - (+) `quiz.ts` ยังเป็น pure: timer อยู่ที่ `server.ts`, กฎอยู่ที่ `quiz.ts` รับ `now` เป็น parameter
-- (+) เปลี่ยนแบบ additive เท่านั้น (parameter ใหม่ optional, return type เดิม) → test เดิมใช้ field check (`toMatchObject`) จึงไม่พังเมื่อมี field เพิ่ม; ไม่ต้องแก้เทสต์เดิมตาม AGENTS.md
+- (+) เปลี่ยนแบบ additive เท่านั้น (parameter ใหม่ optional, return type เดิม) → test เดิมบางตัวเช็ค field แบบ exact (`quiz.test.ts:57` เช็ค `Object.keys`, `quiz.test.ts:46`/`persistence.test.ts:22` ใช้ `toEqual`) → เพิ่ม field ใหม่แบบ optional เฉพาะเมื่อมีค่า เช่น `...(d !== undefined && { deadlineAt: d })` ห้ามใส่ `key: undefined`; ไม่ต้องแก้เทสต์เดิมตาม AGENTS.md
 - หมายเหตุ: UI ตั้งค่าเริ่มต้น 30 s แต่ server contract คงเดิม — ไม่ส่ง `timeLimitSec` = ไม่มี timer (UC-5 A3)
 - (−) ผู้ที่ network ช้ามากอาจเห็นว่ายังเหลือ 1 s แต่ถูกปฏิเสธ → หน้า student ต้องแสดงข้อความ "หมดเวลา" จาก reason `closed` ให้ชัด
 - (−) ไม่ทำ clock sync / grace period — ถือว่าเกิน scope การสอน

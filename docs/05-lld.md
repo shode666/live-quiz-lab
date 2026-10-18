@@ -119,7 +119,7 @@ answer(name: string, questionId: string, choice: number, now: number = Date.now(
 closeQuestion(questionId: string): Outbound[]      // I2 — เรียกโดย timer ใน server.ts; คืน [] ถ้าไม่ใช่ current
 ```
 
-**กฎ additive (I2)** — signature ของ Iteration 1 (`publish(questionId)`, `answer(name, questionId, choice)`) ต้องยังเรียกได้เหมือนเดิมและคืน `Outbound[]` เหมือนเดิม: parameter ใหม่เป็น optional เท่านั้น · ไม่เปลี่ยน return type · `deadlineAt` **ไม่คืนจาก `publish`** แต่เก็บใน `state.current.deadlineAt` และติดไปใน `question` message · test เดิมใน `test/quiz.test.ts` ใช้ field check (`toMatchObject`) จึงไม่พังเมื่อมี field เพิ่ม และไม่ควรต้องแก้ (AGENTS.md)
+**กฎ additive (I2)** — signature ของ Iteration 1 (`publish(questionId)`, `answer(name, questionId, choice)`) ต้องยังเรียกได้เหมือนเดิมและคืน `Outbound[]` เหมือนเดิม: parameter ใหม่เป็น optional เท่านั้น · ไม่เปลี่ยน return type · `deadlineAt` **ไม่คืนจาก `publish`** แต่เก็บใน `state.current.deadlineAt` และติดไปใน `question` message · test เดิมบางตัวเช็ค field แบบ exact (`quiz.test.ts:57` เช็ค `Object.keys`, `quiz.test.ts:46`/`persistence.test.ts:22` ใช้ `toEqual`) → เพิ่ม field ใหม่แบบ optional เฉพาะเมื่อมีค่า เช่น `...(d !== undefined && { deadlineAt: d })` ห้ามใส่ `key: undefined` · ไม่ควรต้องแก้ test เดิม (AGENTS.md)
 
 กฎใน `answer` (ตรวจตามลำดับ): `not_joined` → `not_current_question` → `closed` (I2: `current.closed || now >= deadlineAt`) → `already_answered` → `invalid_choice` → accept
 

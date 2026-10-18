@@ -100,13 +100,15 @@ agent มักถามกลับก่อนลงมือ คำตอบ�
 - เทสต์ "refresh แล้วกลับเข้าห้องเอง" → ตรวจด้วยมือ ไม่ต้องเพิ่ม library สำหรับเทสต์ browser
 - ต้องเขียน ADR ใหม่ไหม → ไม่ต้อง บันทึกใน LLD พอ
 - ต้องไฮไลต์ปุ่มที่เคยเลือกไหม → ไม่ต้อง answered พอ
+- token ถูกแต่ server ยังเห็นว่า socket เก่าต่ออยู่ → ได้ name_taken แล้วกด Join ใหม่ / รอ auto-reconnect พอ ไม่ต้องเตะ socket เก่า
+- ต้องแก้ docs ไหม → แก้ AC-1.4 ใน docs/01-prd.md และ contract ของ join/joined ใน docs/05-lld.md พอ
 
 ### 2.3 Implement
 
 ```text
 แผนโอเค ลงมือได้
 แก้ได้เฉพาะเทสต์เดิมที่ join ชื่อเดิมซ้ำโดยไม่ส่ง token (AC-1.4 ใน test/quiz.test.ts และใน test/persistence.test.ts) ให้ส่ง token เดิมเข้าไป assertion ห้ามเปลี่ยน เทสต์อื่นห้ามแตะ
-ชื่อที่ token เป็น NULL ให้คนแรกที่ join ได้ไปพร้อม token ใหม่ / refresh ตรวจด้วยมือ ไม่เพิ่ม library / ไม่ต้องเขียน ADR ใหม่ / answered พอ ไม่ต้องไฮไลต์คำตอบเดิม
+ชื่อที่ token เป็น NULL ให้คนแรกที่ join ได้ไปพร้อม token ใหม่ / refresh ตรวจด้วยมือ ไม่เพิ่ม library / ไม่ต้องเขียน ADR ใหม่ / answered พอ ไม่ต้องไฮไลต์คำตอบเดิม / token ถูกแต่ socket เก่ายังค้าง = name_taken แล้วลองใหม่ / docs แก้แค่ AC-1.4 + LLD contract
 ทำทีละขั้น commit เมื่อแต่ละขั้นผ่าน แล้วรัน npm test กับ npm run typecheck แสดง output จริงให้ดู
 ```
 
