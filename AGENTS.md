@@ -67,7 +67,7 @@ docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้าง�
 - ห้ามแก้เทสต์เดิมโดยไม่ถาม (เพิ่มเทสต์ใหม่ได้)
 - server รันอยู่แล้วด้วย npm start ใน terminal ของผู้ใช้ ห้าม start ซ้ำ (port ชน) — ตรวจงานด้วย npm test / npm run typecheck
   - ต้องลอง UI หรือตรวจมือ: เปิด instance ที่สองแยก port และแยก db (ไม่แตะ `data/live-quiz.db` ที่ commit): `PORT=3001 DB_PATH=/tmp/live-quiz-try.db npm start`
-    (Windows PowerShell: `$env:PORT=3001; $env:DB_PATH="$env:TEMP\\live-quiz-try.db"; npm start`)
+    (Windows PowerShell: `$env:PORT=3001; $env:DB_PATH="$env:TEMP\live-quiz-try.db"; npm start`)
   - หยุดด้วย Ctrl+C หรือ kill ด้วย PID ห้าม pkill/killall
 - รันเทสต์ (`npm test`) และ `npm run typecheck` ให้ผ่านก่อนบอกว่าเสร็จ
 - อ้างอิง `docs/` (โดยเฉพาะ `05-lld.md` และ ADR) ก่อนเปลี่ยน design
