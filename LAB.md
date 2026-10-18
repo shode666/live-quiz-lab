@@ -118,8 +118,8 @@ git diff main -- test
 
 - [ ] เทสต์ผ่านทั้งหมด typecheck ไม่มี error
 - [ ] ในไฟล์เทสต์เดิม มีบรรทัด `-` เฉพาะจุดที่ join ชื่อซ้ำ และเปลี่ยนแค่การส่ง token
-- [ ] ลองจริง: แท็บ 1 join เป็น Alice ตอบ 1 ข้อ → refresh → กลับมาเป็น Alice เอง
-- [ ] ปิดแท็บ 1 → แท็บ 2 พิมพ์ Alice → ต้องได้ `name_taken`
+- [ ] ลองจริง: หน้าต่างปกติ join เป็น Alice ตอบ 1 ข้อ → refresh → กลับมาเป็น Alice เอง
+- [ ] ปิดหน้าต่างนั้น → เปิด **incognito หรือ browser อื่น** พิมพ์ Alice → ต้องได้ `name_taken` (แท็บในหน้าต่างเดียวกันใช้ localStorage ร่วมกัน จะเข้าเป็น Alice เองทันที — นั่นคือถูกแล้ว)
 - [ ] devtools → Network → WS: token ไม่อยู่ใน message ที่อาจารย์ได้รับ
 - [ ] อ่าน diff: server ตรวจ token เองไหม ถ้า agent แค่จำชื่อใน localStorage แล้ว join ใหม่ ช่องโหว่ยังอยู่ครบ
 
