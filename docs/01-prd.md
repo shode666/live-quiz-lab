@@ -72,8 +72,8 @@ Legend: **I1** = Iteration 1 (base app) · **I2** = Iteration 2 (ทำสดใ
 | Simplicity | ≤ ~400 บรรทัด TS ฝั่ง server; ไม่มี framework ฝั่ง frontend | นับบรรทัด, review |
 | Concurrency | รองรับ ~50 students ต่อพร้อมกันบน 1 process | ทดสอบเปิด 50 tab/ws client |
 | Latency | answer → tally ที่ teacher ≤ 1 s บน LAN | ดูด้วยตา/timestamp ใน log |
-| Environment | Node.js 20+, รันด้วยคำสั่งเดียว `npm start`, เข้าผ่าน `http://<teacher-ip>:3000` | README |
-| Durability | state อยู่ใน memory; restart = เริ่มคาบใหม่ (**accepted risk**, ADR-002) | — |
+| Environment | Node.js 22.13+, รันด้วยคำสั่งเดียว `npm start`, เข้าผ่าน `http://<teacher-ip>:3000` | README |
+| Durability | state อยู่ใน SQLite (`data/live-quiz.db`); restart ไม่ทำให้ state หาย, เริ่มคาบใหม่ = `npm run reset` (ADR-004) | — |
 | Security | ไม่มี auth; ใช้ใน LAN ห้องเรียนเท่านั้น (**accepted risk**, ADR-002) | — |
 
 ## 6. Glossary

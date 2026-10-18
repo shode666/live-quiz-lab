@@ -1,17 +1,19 @@
 # LLD — live-quiz
 
 > model requested: fable · served: Fable 5.1 (claude-fable-5-1)
-> ต้องสอดคล้องกับ `03-hld.md` และ ADR-001..003 · ส่วนที่ติด **(I2)** ยังไม่ implement ใน Iteration 1
+> ต้องสอดคล้องกับ `03-hld.md` และ ADR-001..004 · ส่วนที่ติด **(I2)** ยังไม่ implement ใน Iteration 1
 
 ## 1. Layout
 
 ```
 live-quiz/
-├── package.json          # scripts: start (tsx src/server.ts), test (vitest)
+├── package.json          # scripts: start (tsx src/server.ts), test (vitest), reset (ลบ DB)
 ├── tsconfig.json
-├── questions.json        # [{ "id": "q1", "text": "...", "choices": ["A","B","C","D"] }]
+├── questions.json        # seed: [{ "id": "q1", "text": "...", "choices": ["A","B","C","D"] }]
+├── data/live-quiz.db     # SQLite (gitignored, DB_PATH override)
 ├── src/
-│   ├── quiz.ts           # state + กฎ — pure, ไม่ import ws/express
+│   ├── quiz.ts           # state + กฎ — ไม่ import ws/express
+│   ├── db.ts             # node:sqlite: openDb + createStore (SQL ทั้งหมด)
 │   ├── messages.ts       # TypeScript types ของ contract (ส่วน §3)
 │   └── server.ts         # Express static + ws wiring + (I2) timer
 ├── public/
@@ -22,8 +24,9 @@ live-quiz/
 ```
 
 หน้าที่ต่อไฟล์
-- `quiz.ts` — `createQuiz(questions)` คืน object ที่มี `state` และ handlers (§4) · ทุก handler **คืน list ของ outbound messages** ไม่ส่งเอง
-- `server.ts` — อ่าน `questions.json` → `createQuiz` → เปิด Express (`public/` + `/questions.json`) → เปิด `ws` บน server เดียวกัน (port 3000) → ต่อ socket: parse JSON → เรียก handler → ส่ง outbound ตาม `to` → `close` เรียก `disconnect`
+- `quiz.ts` — `createQuiz(db, seed?)` (db = `DatabaseSync`; seed = โจทย์เริ่มต้น) คืน object ที่มี `state` และ handlers (§4) · ทุก handler **คืน list ของ outbound messages** ไม่ส่งเอง
+- `server.ts` — อ่าน `questions.json` → `openDb(DB_PATH)` → `createQuiz(db, questions)` → เปิด Express (`public/` + `/questions.json`) → เปิด `ws` บน server เดียวกัน (port 3000) → ต่อ socket: parse JSON → เรียก handler → ส่ง outbound ตาม `to` → `close` เรียก `disconnect`
+- `db.ts` — `openDb(file)` สร้างโฟลเดอร์/ไฟล์ + `CREATE TABLE IF NOT EXISTS` (questions, students, current, answers) · `createStore(db)` = SQL ทั้งหมด: seed โจทย์ถ้าตารางว่าง, `resetConnected`, `load`, `saveStudent`, `setCurrent` (เคลียร์ answers ใน transaction), `saveAnswer`
 - `messages.ts` — types เท่านั้น ให้ทั้ง `quiz.ts`, `server.ts`, test ใช้ร่วมกัน
 
 ## 2. State model (`quiz.ts`)
@@ -42,6 +45,8 @@ type QuizState = {
   } | null;
 };
 ```
+
+`state` เป็น working copy ใน memory ที่ `createQuiz` โหลดจาก SQLite ตอนสร้าง และทุก handler เขียนการเปลี่ยนแปลงลง SQLite ก่อนอัปเดต memory (ADR-004) · `connected` ถูกรีเซ็ตเป็น `false` ตอนโหลด
 
 `server.ts` เก็บ map แยกต่างหาก `socket -> { role: 'teacher' } | { role: 'student', name }` — `quiz.ts` ไม่รู้จัก socket
 
@@ -147,6 +152,10 @@ closeQuestion(questionId: string): Outbound[]      // I2 — เรียกโ�
 | answer โดยไม่ join → `not_joined` | AC-3.5 |
 | teacherJoin ระหว่างมี current → ได้ `students` + `tally` ปัจจุบัน | AC-4.2 |
 | `tally.total` นับรวม student ที่ offline | UC-4 edge |
+
+### Persistence (ADR-004) — `test/persistence.test.ts`
+
+สร้าง `createQuiz` ใหม่บน db `:memory:` เดิม = จำลอง restart: students/current/answers/tally กู้คืน · `connected` รีเซ็ตเป็น false · publish ทับแล้วคำตอบเก่าไม่กลับมา · seed เฉพาะตอนตาราง questions ว่าง
 
 ### Iteration 2 — tests ที่ต้อง **เพิ่ม** (ห้ามแก้ test เดิมให้ fail)
 

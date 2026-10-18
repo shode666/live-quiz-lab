@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Outbound, Question } from '../src/messages';
+import { openDb } from '../src/db';
 import { createQuiz, type Quiz } from '../src/quiz';
 
 const questions: Question[] = [
@@ -13,7 +14,7 @@ const find = (out: Outbound[], to: Outbound['to'], type: string) =>
 
 let quiz: Quiz;
 beforeEach(() => {
-  quiz = createQuiz(questions);
+  quiz = createQuiz(openDb(':memory:'), questions);
 });
 
 describe('FR-1 join', () => {

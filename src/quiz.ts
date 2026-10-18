@@ -1,5 +1,7 @@
 // state + กฎของ quiz — pure: ไม่ import ws/express, ไม่รู้จัก socket
 // ทุก handler คืน list ของ Outbound (ไม่ส่งเอง) และไม่ throw
+import type { DatabaseSync } from 'node:sqlite';
+import { createStore } from './db';
 import type { AnswerReject, Outbound, PublicQuestion, Question } from './messages';
 
 type Student = { name: string; connected: boolean };
@@ -19,8 +21,18 @@ function toPublic(q: Question): PublicQuestion {
   return { id: q.id, text: q.text, choices: q.choices };
 }
 
-export function createQuiz(questions: Question[]) {
-  const state: QuizState = { questions, students: new Map(), current: null };
+// state ทำงานใน memory (Map) แต่ทุกการเปลี่ยนแปลงเขียนลง SQLite ทันที และโหลดกลับตอนสร้าง (ADR-004)
+// seed = โจทย์เริ่มต้น ใช้เฉพาะเมื่อตาราง questions ยังว่าง
+export function createQuiz(db: DatabaseSync, seed: Question[] = []) {
+  const store = createStore(db);
+  store.seedQuestions(seed);
+  store.resetConnected(); // socket ไม่รอด restart
+  const snap = store.load();
+  const state: QuizState = {
+    questions: snap.questions,
+    students: new Map(snap.students.map((s) => [s.name, s])),
+    current: snap.current && { questionId: snap.current.questionId, answers: new Map(snap.current.answers) },
+  };
 
   function findQuestion(id: string): Question | undefined {
     return state.questions.find((q) => q.id === id);
@@ -65,6 +77,7 @@ export function createQuiz(questions: Question[]) {
     }
     // ชื่อใหม่ หรือ reconnect (ชื่อเดิมที่หลุดไปแล้ว) -> คำตอบเดิมยังอยู่
     state.students.set(name, { name, connected: true });
+    store.saveStudent(name, true);
     const question = state.current ? findQuestion(state.current.questionId)! : null;
     return [
       {
@@ -85,6 +98,7 @@ export function createQuiz(questions: Question[]) {
     const student = state.students.get(name);
     if (!student) return [];
     student.connected = false;
+    store.saveStudent(name, false);
     return [studentsMsg()];
   }
 
@@ -99,6 +113,7 @@ export function createQuiz(questions: Question[]) {
     if (!question) {
       return [{ to: 'self', msg: { type: 'error', reason: 'unknown_question' } }];
     }
+    store.setCurrent(questionId);
     state.current = { questionId, answers: new Map() };
     return [{ to: 'students', msg: { type: 'question', question: toPublic(question) } }, ...tallyMsgs()];
   }
@@ -117,6 +132,7 @@ export function createQuiz(questions: Question[]) {
       return reject('invalid_choice');
     }
 
+    store.saveAnswer(name, choice);
     state.current.answers.set(name, choice);
     return [{ to: 'self', msg: { type: 'answer:accepted', questionId } }, ...tallyMsgs()];
   }

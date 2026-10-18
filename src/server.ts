@@ -6,13 +6,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { ClientToServer, Outbound, Question, ServerToClient } from './messages';
+import { DEFAULT_DB_PATH, openDb } from './db';
 import { createQuiz } from './quiz';
 
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = path.join(__dirname, '..');
 
 const questions: Question[] = JSON.parse(fs.readFileSync(path.join(ROOT, 'questions.json'), 'utf8'));
-const quiz = createQuiz(questions);
+const quiz = createQuiz(openDb(process.env.DB_PATH || DEFAULT_DB_PATH), questions); // questions = seed รันครั้งแรกเท่านั้น
 
 const app = express();
 app.use(express.static(path.join(ROOT, 'public')));

@@ -1,7 +1,7 @@
 # AGENTS.md — live-quiz
 
 ## Stack
-Node.js 20+ · TypeScript · Express · ws · vitest · frontend = HTML + vanilla JS (ไม่มี framework/bundler) · state อยู่ใน memory ห้องเดียว
+Node.js 22.13+ · TypeScript · Express · ws · vitest · frontend = HTML + vanilla JS (ไม่มี framework/bundler) · state อยู่ใน SQLite (`node:sqlite` ในตัว Node) ห้องเดียว
 
 ## Commands
 | งาน | คำสั่ง |
@@ -11,20 +11,24 @@ Node.js 20+ · TypeScript · Express · ws · vitest · frontend = HTML + vanill
 | รันปกติ | `npm start` (port 3000, เปลี่ยนด้วย `PORT=...`) |
 | เทสต์ | `npm test` |
 | ตรวจ type | `npm run typecheck` |
+| เริ่มคาบใหม่ (ลบ DB) | `npm run reset` |
 
 ## Folder layout
 ```
-src/quiz.ts       state + กฎ (pure ไม่ import ws/express) — handler คืน Outbound[]
+src/quiz.ts       state + กฎ (ไม่ import ws/express) — รับ db handle, handler คืน Outbound[]
+src/db.ts         SQLite (node:sqlite): เปิดไฟล์ + สร้างตาราง + SQL ทั้งหมด
 src/messages.ts   TypeScript types ของ WebSocket contract
 src/server.ts     Express static + ws wiring (I/O เท่านั้น)
 public/           teacher.html, student.html
 test/quiz.test.ts vitest (ไม่เปิด socket)
-questions.json    โจทย์ [{id, text, choices[]}]
+questions.json    โจทย์ [{id, text, choices[]}] — seed เข้า DB ตอนรันครั้งแรก
+data/             live-quiz.db (gitignored, เปลี่ยน path ด้วย DB_PATH)
 docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้างอิง design
 ```
 
 ## Rules
 - ห้ามเพิ่ม dependency โดยไม่ถาม
+- state อยู่ใน SQLite (`src/db.ts`) ห้ามเพิ่ม ORM/library DB อื่น
 - ห้ามเปลี่ยน WebSocket event เดิมที่ student ใช้ (เพิ่ม field optional ได้ ลบ/เปลี่ยนชื่อไม่ได้)
 - ห้ามแก้เทสต์เดิมโดยไม่ถาม (เพิ่มเทสต์ใหม่ได้)
 - รันเทสต์ (`npm test`) และ `npm run typecheck` ให้ผ่านก่อนบอกว่าเสร็จ

@@ -1,6 +1,6 @@
 # ADR-002: State ใน memory ห้องเดียว ไม่มี database ไม่มี auth
 
-**Status**: Accepted   **Date**: 2026-10-13   **Owner**: `plan` (architecture mode)
+**Status**: Superseded by ADR-004 (state ย้ายไป SQLite; ส่วน "ไม่มี auth" ยังใช้อยู่)   **Date**: 2026-10-13   **Owner**: `plan` (architecture mode)
 **Supports**: NFR Simplicity, NFR Environment (`01-prd.md` §5); ทุก FR ใช้ state เดียวนี้
 
 ## Context
