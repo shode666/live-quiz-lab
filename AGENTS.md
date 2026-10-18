@@ -28,6 +28,36 @@ docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้าง�
 ## ดู/แก้โจทย์
 ตาราง `questions(pos, id, text, choices)` ใน `data/live-quiz.db` (`choices` = JSON array): `sqlite3 data/live-quiz.db` (ถ้ามี) หรือ `node -e` กับ `node:sqlite` (ตัวอย่างใน README)
 
+## Library ที่มีอยู่ และใช้ทำอะไร
+| ชื่อ | ใช้ทำอะไร / อยู่ไฟล์ไหน |
+|---|---|
+| express (dep) | serve ไฟล์ใน `public/` + `GET /questions.json` (`src/server.ts`) |
+| ws (dep) | WebSocket server (`src/server.ts`) และ client ในเทสต์ (`test/server.test.ts`) |
+| vitest (dev) | เทสต์ทั้งหมดใน `test/` (`npm test`); ใช้ `vi.useFakeTimers` ได้เมื่อเทสต์ต้องคุมเวลา |
+| tsx (dev) | รัน TypeScript ตรง ๆ + watch (`npm start`, `npm run reset`) |
+| typescript (dev) | typecheck (`npm run typecheck`) |
+| @types/express, @types/ws, @types/node (dev) | type definitions ของ express, ws, Node |
+| node:sqlite | database (`src/db.ts`; type อยู่ใน `src/quiz.ts`) |
+| node:fs, node:path | สร้างโฟลเดอร์/จัด path ของไฟล์ db (`src/db.ts`); path ของ `public/` (`src/server.ts`); temp dir ในเทสต์ (`test/server.test.ts`) |
+| node:http | สร้าง HTTP server ให้ express + ws (`src/server.ts`) |
+| node:net | type `AddressInfo` สำหรับอ่าน port จริง (`src/server.ts`) |
+| node:os | `src/server.ts` (แสดง address ของเครื่อง); temp dir ในเทสต์ (`test/server.test.ts`) |
+| node:crypto | ยังไม่ถูก import ในโค้ด — มีในตัว Node ใช้ได้เมื่อจำเป็น (ดูตารางล่าง) |
+
+## ใช้ของที่มีอยู่แล้ว ไม่ต้อง install
+| ต้องการ | ใช้ | ไม่ใช้ |
+|---|---|---|
+| สร้าง id / token | `crypto.randomUUID()` (`node:crypto`) | uuid, nanoid |
+| validate input | เขียนเงื่อนไขเองใน `quiz.ts` | zod, joi, yup |
+| database | `node:sqlite` ผ่าน `src/db.ts` | prisma, knex, drizzle, better-sqlite3, ORM อื่น |
+| เวลา / timer | `Date.now()`, `setTimeout`; ในเทสต์ `vi.useFakeTimers` | dayjs, moment, node-cron |
+| จำค่าฝั่ง browser | `localStorage` | cookie/session library |
+| หน้าตา / theme | CSS variables ใน `public/style.css` | Tailwind, Bootstrap, UI framework |
+| frontend | HTML + vanilla JS ใน `public/` | React, Vue, bundler |
+| เทสต์ผ่าน WebSocket | `startServer()` + `ws` (ดู `test/server.test.ts`) | supertest, socket.io-client |
+
+ถ้าต้องการ library นอกตารางนี้ ให้ถามผู้ใช้ก่อนพร้อมเหตุผลว่าทำไมของที่มีไม่พอ
+
 ## Rules
 - ห้ามเพิ่ม dependency โดยไม่ถาม
 - state อยู่ใน SQLite (`src/db.ts`) ห้ามเพิ่ม ORM/library DB อื่น
