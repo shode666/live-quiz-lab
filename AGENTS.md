@@ -19,6 +19,7 @@ src/db.ts         SQLite (node:sqlite): เปิดไฟล์ + สร้า�
 src/messages.ts   TypeScript types ของ WebSocket contract
 src/server.ts     Express static + ws wiring (I/O เท่านั้น) — startServer() เทสต์ผ่าน WebSocket ได้ ดู test/server.test.ts
 public/           teacher.html, student.html
+public/lab.html   หน้าอ่าน LAB.md แบบสวย (render ตอนเปิดหน้า: ปุ่ม copy, สารบัญ, checklist) — ห้ามก๊อปเนื้อหา LAB.md ลงไฟล์นี้
 test/quiz.test.ts vitest (ไม่เปิด socket)
 test/helpers.ts   `connect(server, clients)` — ws client สำหรับเทสต์ที่เปิด server จริง (import ใช้ ไม่ต้องก๊อป)
 scripts/reset.ts  เริ่มคาบใหม่ (ลบ students/answers/current)
@@ -32,7 +33,7 @@ docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้าง�
 ## Library ที่มีอยู่ และใช้ทำอะไร
 | ชื่อ | ใช้ทำอะไร / อยู่ไฟล์ไหน |
 |---|---|
-| express (dep) | serve ไฟล์ใน `public/` + `GET /questions.json` (`src/server.ts`) |
+| express (dep) | serve ไฟล์ใน `public/` + `GET /questions.json`, `GET /LAB.md` (`src/server.ts`) |
 | ws (dep) | WebSocket server (`src/server.ts`) และ client ในเทสต์ (`test/server.test.ts`) |
 | vitest (dev) | เทสต์ทั้งหมดใน `test/` (`npm test`); ใช้ `vi.useFakeTimers` ได้เมื่อเทสต์ต้องคุมเวลา |
 | tsx (dev) | รัน TypeScript ตรง ๆ + watch (`npm start`, `npm run reset`) |

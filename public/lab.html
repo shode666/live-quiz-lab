@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab: AI-Assisted Software Development</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* lab-specific only; colors/spacing come from the variables in style.css.
+   Content is rendered from /LAB.md at runtime - do not copy lab text into this file. */
+body { padding: var(--space-4); }
+.lab-wrap { max-width: 62rem; margin: 0 auto; }
+.lab-toc { margin-bottom: var(--space-5); }
+.lab-toc summary { cursor: pointer; font-weight: 600; padding: var(--space-3) var(--space-4);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.lab-toc nav { padding: var(--space-3) var(--space-4); background: var(--surface);
+  border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+.lab-toc ul { list-style: none; margin: 0; padding: 0; }
+.lab-toc li { margin: 0; }
+.lab-toc a { display: block; padding: var(--space-1) 0; color: var(--text); text-decoration: none; font-size: var(--fs-sm); line-height: 1.4; }
+.lab-toc a:hover, .lab-toc a.active { color: var(--accent); }
+.lab-toc ul ul { padding-left: var(--space-4); }
+.lab-toc ul ul a { color: var(--muted); }
+.lab-toc .reset { margin-top: var(--space-3); width: 100%; font-size: var(--fs-sm); }
+
+#lab { min-width: 0; max-width: 47.5rem; line-height: 1.8; overflow-wrap: anywhere; }
+#lab h1 { font-size: 1.6rem; line-height: 1.35; margin-bottom: var(--space-4); }
+#lab h2 { font-size: var(--fs-xl); margin: var(--space-6) 0 var(--space-3); padding-top: var(--space-3); line-height: 1.4; scroll-margin-top: var(--space-4); }
+#lab h3 { font-size: var(--fs-lg); margin: var(--space-5) 0 var(--space-2); line-height: 1.4; scroll-margin-top: var(--space-4); }
+#lab hr { border: 0; border-top: 1px solid var(--border); margin: var(--space-5) 0; }
+#lab ul, #lab ol { margin: 0 0 var(--space-3); padding-left: 1.4rem; }
+#lab li { margin: var(--space-1) 0; }
+#lab li > ul, #lab li > ol { margin: var(--space-1) 0; }
+#lab li.task { list-style: none; margin-left: -1.4rem; }
+#lab li.task label { display: flex; gap: var(--space-2); align-items: flex-start; cursor: pointer; }
+#lab li.task input { width: 1.2rem; height: 1.2rem; margin: .45rem 0 0; flex: none; padding: 0; accent-color: var(--accent); }
+#lab li.task input:checked + span { color: var(--muted); text-decoration: line-through; }
+#lab a { color: var(--accent); }
+#lab code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em;
+  background: var(--track); padding: .1em .35em; border-radius: 4px; overflow-wrap: anywhere; }
+#lab blockquote { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-4);
+  border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+#lab blockquote p:last-child { margin-bottom: 0; }
+
+.codeblock { margin: 0 0 var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); overflow: hidden; line-height: 1.5; }
+.codeblock header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3); background: var(--track);
+  font-size: var(--fs-sm); color: var(--muted); }
+.codeblock header button { padding: var(--space-1) var(--space-3); font-size: var(--fs-sm); min-height: 2rem; }
+.codeblock header button.done { color: var(--ok); border-color: var(--ok); }
+.codeblock pre { margin: 0; padding: var(--space-3) var(--space-4); overflow-x: auto; }
+#lab .codeblock pre code { background: none; padding: 0; font-size: .85rem; white-space: pre; overflow-wrap: normal; }
+
+.tablewrap { overflow-x: auto; margin: 0 0 var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+#lab table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: var(--fs-sm); line-height: 1.6; background: var(--surface); }
+#lab th, #lab td { text-align: left; vertical-align: top; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+#lab th { background: var(--track); white-space: nowrap; }
+#lab tr:last-child td { border-bottom: 0; }
+
+.lab-error { padding: var(--space-5); background: var(--surface); border: 1px solid var(--danger);
+  border-radius: var(--radius); color: var(--danger); }
+
+@media (min-width: 62rem) {
+  body { padding: var(--space-6) var(--space-4); }
+  .lab-wrap { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+  .lab-toc { position: sticky; top: var(--space-4); max-height: calc(100vh - 2rem); overflow-y: auto; margin: 0; }
+  .lab-toc summary { pointer-events: none; list-style: none; }
+  .lab-toc summary::-webkit-details-marker { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="lab-wrap">
+  <details class="lab-toc" id="tocBox" open>
+    <summary>สารบัญ</summary>
+    <nav id="toc" aria-label="สารบัญ"><button type="button" class="reset" id="resetBtn">ล้างเครื่องหมาย</button></nav>
+  </details>
+  <main id="lab" aria-live="polite">กำลังโหลด…</main>
+</div>
+<script>
+(function () {
+  'use strict';
+  var LS_PREFIX = 'liveQuiz.lab.';
+  var lab = document.getElementById('lab');
+  var toc = document.getElementById('toc');
+  var checkboxes = [];
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  // ---------- inline: `code`, **bold**, [text](url), \x escape ----------
+  function safeUrl(u) { return /^(https?:\/\/|mailto:|#|[\w./-]+$)/i.test(u); }
+
+  function inline(parent, s) {
+    var buf = '';
+    function flush() { if (buf) { parent.appendChild(document.createTextNode(buf)); buf = ''; } }
+    var i = 0, m;
+    while (i < s.length) {
+      var c = s[i];
+      if (c === '\\' && i + 1 < s.length && /[\\`*_{}\[\]()#+\-.!|<>~]/.test(s[i + 1])) { buf += s[i + 1]; i += 2; continue; }
+      if (c === '`') {
+        var end = s.indexOf('`', i + 1);
+        if (end > i) { flush(); parent.appendChild(el('code', null, s.slice(i + 1, end))); i = end + 1; continue; }
+      }
+      if (c === '*' && s[i + 1] === '*') {
+        var e2 = s.indexOf('**', i + 2);
+        if (e2 > i + 2) { flush(); var b = el('strong'); inline(b, s.slice(i + 2, e2)); parent.appendChild(b); i = e2 + 2; continue; }
+      }
+      if (c === '[') {
+        m = /^\[([^\]]+)\]\(([^)\s]+)\)/.exec(s.slice(i));
+        if (m && safeUrl(m[2])) {
+          flush();
+          var a = el('a'); a.href = m[2];
+          if (/^https?:/i.test(m[2])) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+          inline(a, m[1]); parent.appendChild(a); i += m[0].length; continue;
+        }
+      }
+      if (/^https?:\/\//.test(s.slice(i)) && (i === 0 || /\s|\(/.test(s[i - 1]))) {
+        m = /^https?:\/\/[^\s)]+/.exec(s.slice(i));
+        var url = m[0].replace(/[.,;:]+$/, '');
+        flush();
+        var al = el('a', null, url); al.href = url; al.target = '_blank'; al.rel = 'noopener noreferrer';
+        parent.appendChild(al); i += url.length; continue;
+      }
+      buf += c; i++;
+    }
+    flush();
+  }
+
+  // ---------- block parser ----------
+  var RE_FENCE = /^(\s*)```\s*([\w+-]*)\s*$/;
+  var RE_LIST = /^(\s*)([-*]|\d+\.)\s+(.*)$/;
+  function indentOf(l) { return /^\s*/.exec(l)[0].length; }
+  function splitRow(l) {
+    var t = l.trim().replace(/^\|/, '').replace(/\|$/, '');
+    var cells = [], cur = '';
+    for (var i = 0; i < t.length; i++) {
+      if (t[i] === '\\' && t[i + 1] === '|') { cur += '|'; i++; }
+      else if (t[i] === '|') { cells.push(cur.trim()); cur = ''; }
+      else cur += t[i];
+    }
+    cells.push(cur.trim());
+    return cells;
+  }
+  var RE_SEP = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+
+  function codeBlock(lang, lines) {
+    var text = lines.join('\n');
+    var box = el('div', 'codeblock');
+    var head = el('header');
+    head.appendChild(el('span', null, lang || 'text'));
+    var btn = el('button', null, 'Copy');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Copy code');
+    var timer;
+    btn.addEventListener('click', function () {
+      copyText(text).then(function (ok) {
+        btn.textContent = ok ? 'Copied' : 'Copy ไม่สำเร็จ';
+        btn.classList.toggle('done', ok);
+        clearTimeout(timer);
+        timer = setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1500);
+      });
+    });
+    head.appendChild(btn);
+    var pre = el('pre'); var code = el('code', null, text);
+    pre.appendChild(code);
+    pre.tabIndex = 0;
+    box.appendChild(head); box.appendChild(pre);
+    return box;
+  }
+
+  function copyText(text) {
+    function fallback() {
+      return new Promise(function (resolve) {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        resolve(ok);
+      });
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, fallback);
+    }
+    return fallback();
+  }
+
+  function addCheckbox(li, rest) {
+    var idx = checkboxes.length;
+    var label = el('label'); var input = el('input'); input.type = 'checkbox';
+    try { input.checked = localStorage.getItem(LS_PREFIX + idx) === '1'; } catch (e) { /* ignore */ }
+    input.addEventListener('change', function () {
+      try {
+        if (input.checked) localStorage.setItem(LS_PREFIX + idx, '1');
+        else localStorage.removeItem(LS_PREFIX + idx);
+      } catch (e) { /* ignore */ }
+    });
+    checkboxes.push(input);
+    var span = el('span'); inline(span, rest);
+    label.appendChild(input); label.appendChild(span);
+    li.className = 'task';
+    li.appendChild(label);
+  }
+
+  // parse(lines) -> appends block elements to `out`; headings are collected for the TOC
+  function parse(lines, out, headings) {
+    var i = 0, n = lines.length, m;
+    function isBlockStart(l) {
+      return !l.trim() || /^\s*#{1,6}\s/.test(l) || RE_FENCE.test(l) || RE_LIST.test(l) ||
+        /^\s*(-{3,}|\*{3,})\s*$/.test(l) || /^\s*>/.test(l) || /^\s*\|/.test(l);
+    }
+    while (i < n) {
+      var line = lines[i];
+      if (!line.trim()) { i++; continue; }
+
+      if ((m = RE_FENCE.exec(line))) {
+        var ind = m[1].length, body = [];
+        i++;
+        while (i < n && !/^\s*```\s*$/.test(lines[i])) {
+          body.push(lines[i].slice(Math.min(ind, indentOf(lines[i]))));
+          i++;
+        }
+        i++;
+        out.appendChild(codeBlock(m[2], body));
+        continue;
+      }
+
+      if ((m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(line))) {
+        var lvl = m[1].length, h = el('h' + lvl);
+        inline(h, m[2]);
+        if (headings && (lvl === 2 || lvl === 3)) {
+          h.id = 'h-' + headings.length;
+          headings.push({ level: lvl, text: h.textContent, id: h.id });
+        }
+        out.appendChild(h); i++; continue;
+      }
+
+      if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)) { out.appendChild(el('hr')); i++; continue; }
+
+      if (/^\s*>/.test(line)) {
+        var q = [];
+        while (i < n && /^\s*>/.test(lines[i])) { q.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+        var bq = el('blockquote'); parse(q, bq, null); out.appendChild(bq); continue;
+      }
+
+      if (/^\s*\|/.test(line) && i + 1 < n && RE_SEP.test(lines[i + 1]) && /\|/.test(lines[i + 1])) {
+        var heads = splitRow(line); i += 2;
+        var table = el('table'), thead = el('thead'), tr = el('tr');
+        heads.forEach(function (c) { var th = el('th'); inline(th, c); tr.appendChild(th); });
+        thead.appendChild(tr); table.appendChild(thead);
+        var tbody = el('tbody');
+        while (i < n && /^\s*\|/.test(lines[i])) {
+          var cells = splitRow(lines[i]); var r = el('tr');
+          for (var k = 0; k < heads.length; k++) { var td = el('td'); inline(td, cells[k] || ''); r.appendChild(td); }
+          tbody.appendChild(r); i++;
+        }
+        table.appendChild(tbody);
+        var wrap = el('div', 'tablewrap'); wrap.appendChild(table); out.appendChild(wrap);
+        continue;
+      }
+
+      if ((m = RE_LIST.exec(line))) {
+        var base = m[1].length, ordered = /\d/.test(m[2]);
+        var list = el(ordered ? 'ol' : 'ul');
+        while (i < n && (m = RE_LIST.exec(lines[i])) && m[1].length === base && /\d/.test(m[2]) === ordered) {
+          var content = m[3], bodyLines = [];
+          i++;
+          // continuation: blank lines followed by deeper-indented lines, or deeper-indented lines
+          while (i < n) {
+            var l2 = lines[i];
+            if (!l2.trim()) {
+              var j = i; while (j < n && !lines[j].trim()) j++;
+              if (j < n && indentOf(lines[j]) > base) { bodyLines.push(''); i++; continue; }
+              break;
+            }
+            if (indentOf(l2) > base) { bodyLines.push(l2); i++; continue; }
+            break;
+          }
+          var li = el('li');
+          var cm = /^\[( |x|X)\]\s+(.*)$/.exec(content);
+          if (cm) {
+            addCheckbox(li, cm[2]);
+          } else {
+            inline(li, content);
+          }
+          if (bodyLines.length) {
+            var min = Infinity;
+            bodyLines.forEach(function (b) { if (b.trim()) min = Math.min(min, indentOf(b)); });
+            parse(bodyLines.map(function (b) { return b.slice(Math.min(min, indentOf(b))); }), li, null);
+          }
+          list.appendChild(li);
+        }
+        out.appendChild(list);
+        continue;
+      }
+
+      // paragraph: consecutive plain lines
+      var para = [line.trim()]; i++;
+      while (i < n && !isBlockStart(lines[i])) { para.push(lines[i].trim()); i++; }
+      var p = el('p'); inline(p, para.join(' ')); out.appendChild(p);
+    }
+  }
+
+  // ---------- TOC ----------
+  function buildToc(headings) {
+    var resetBtn = document.getElementById('resetBtn');
+    var ul = el('ul'), lastLi = null, sub = null;
+    headings.forEach(function (h) {
+      var li = el('li'); var a = el('a', null, h.text); a.href = '#' + h.id; li.appendChild(a);
+      if (h.level === 2) { ul.appendChild(li); lastLi = li; sub = null; }
+      else {
+        if (!lastLi) { ul.appendChild(li); return; }
+        if (!sub) { sub = el('ul'); lastLi.appendChild(sub); }
+        sub.appendChild(li);
+      }
+    });
+    toc.insertBefore(ul, resetBtn);
+    // highlight the section being read
+    var links = {};
+    toc.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            Object.keys(links).forEach(function (k) { links[k].classList.remove('active'); });
+            links[en.target.id].classList.add('active');
+          }
+        });
+      }, { rootMargin: '0px 0px -75% 0px' });
+      headings.forEach(function (h) { io.observe(document.getElementById(h.id)); });
+    }
+    // collapsed by default on narrow screens, always open on wide; picking an entry closes it on narrow
+    var box = document.getElementById('tocBox');
+    var wide = window.matchMedia('(min-width: 62rem)');
+    function sync() { box.open = wide.matches; }
+    sync();
+    if (wide.addEventListener) wide.addEventListener('change', sync);
+    toc.addEventListener('click', function (e) { if (e.target.tagName === 'A' && !wide.matches) box.open = false; });
+  }
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    checkboxes.forEach(function (c, idx) {
+      c.checked = false;
+      try { localStorage.removeItem(LS_PREFIX + idx); } catch (e) { /* ignore */ }
+    });
+  });
+
+  function showError() {
+    lab.textContent = '';
+    var box = el('div', 'lab-error');
+    box.appendChild(el('strong', null, 'โหลด LAB.md ไม่ได้'));
+    box.appendChild(el('p', null, 'เปิดผ่าน npm start แล้วเข้า /lab.html (เช่น http://localhost:3000/lab.html) — เปิดไฟล์ตรง ๆ จากดิสก์จะใช้ไม่ได้'));
+    lab.appendChild(box);
+  }
+
+  fetch('/LAB.md', { cache: 'no-cache' }).then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(function (md) {
+    var out = document.createDocumentFragment(), headings = [];
+    parse(md.replace(/\r\n?/g, '\n').split('\n'), out, headings);
+    lab.textContent = '';
+    lab.appendChild(out);
+    var t = lab.querySelector('h1');
+    if (t) document.title = t.textContent;
+    buildToc(headings);
+    if (location.hash) {
+      var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (target) target.scrollIntoView();
+    }
+  }).catch(showError);
+})();
+</script>
+</body>
+</html>

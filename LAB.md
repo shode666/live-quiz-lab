@@ -1,5 +1,7 @@
 # Lab: AI-Assisted Software Development
 
+อ่านแบบสวย ๆ: เปิด http://localhost:3000/lab.html หลัง `npm start`
+
 ใช้ coding agent เพิ่ม feature จริงให้แอป Live Quiz ตั้งแต่ requirement จนถึง verify
 
 - ไม่มีคะแนน ไม่ต้องส่ง ทำไม่เสร็จในห้องก็เอาไปทำต่อที่บ้านได้ ทุกอย่างอยู่ในไฟล์นี้

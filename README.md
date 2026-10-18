@@ -2,6 +2,8 @@
 
 > **ทำ workshop:** เปิด [LAB.md](LAB.md) แล้วทำตามทีละขั้นบน branch ของตัวเอง (เช่น `git checkout -b my-lab`)
 
+อ่านแบบสวย ๆ: เปิด http://localhost:3000/lab.html หลัง `npm start`
+
 เว็บ quiz ในห้องเรียน: อาจารย์ publish โจทย์ multiple choice ทีละข้อ นักศึกษาตอบผ่าน browser (WebSocket) และอาจารย์เห็นผลรวมคำตอบสด ตัวอย่างประกอบการบรรยาย "AI-Assisted Software Development: Using AI Agents in Practice"
 
 Stack: Node.js 22.13+, Express, TypeScript, ws, vitest · state อยู่ใน SQLite (`node:sqlite` ในตัว Node ไม่ต้องลง library) ห้องเดียว

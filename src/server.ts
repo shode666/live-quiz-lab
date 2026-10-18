@@ -20,6 +20,9 @@ export async function startServer(opts: { port: number; dbPath: string }) {
   app.use(express.static(path.join(ROOT, 'public')));
   // teacher.html โหลดรายการโจทย์จากที่นี่ (public/ ไม่เปลี่ยน) — ข้อมูลมาจากตาราง questions
   app.get('/questions.json', (_req, res) => res.json(quiz.state.questions));
+  // lab.html อ่าน LAB.md จากที่นี่ตอนเปิดหน้า (LAB.md เป็นแหล่งเดียว ไม่ก๊อปเนื้อหา)
+  app.get('/LAB.md', (_req, res) =>
+    res.type('text/markdown; charset=utf-8').sendFile(path.join(ROOT, 'LAB.md')));
 
   const server = http.createServer(app);
   const wss = new WebSocketServer({ server });
