@@ -7,8 +7,7 @@ Node.js 22.13+ · TypeScript · Express · ws · vitest · frontend = HTML + van
 | งาน | คำสั่ง |
 |---|---|
 | ติดตั้ง | `npm install` |
-| รัน dev (auto-reload) | `npm run dev` |
-| รันปกติ | `npm start` (port 3000, เปลี่ยนด้วย `PORT=...`) |
+| รัน server (auto-reload) | `npm start` (port 3000, เปลี่ยนด้วย `PORT=...`) |
 | เทสต์ | `npm test` |
 | ตรวจ type | `npm run typecheck` |
 | เริ่มคาบใหม่ (ลบ students/answers/current เก็บโจทย์; หรือ `git checkout data/live-quiz.db`) | `npm run reset` |
@@ -34,6 +33,7 @@ docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้าง�
 - state อยู่ใน SQLite (`src/db.ts`) ห้ามเพิ่ม ORM/library DB อื่น
 - ห้ามเปลี่ยน WebSocket event เดิมที่ student ใช้ (เพิ่ม field optional ได้ ลบ/เปลี่ยนชื่อไม่ได้)
 - ห้ามแก้เทสต์เดิมโดยไม่ถาม (เพิ่มเทสต์ใหม่ได้)
+- server รันอยู่แล้วด้วย npm start ใน terminal ของผู้ใช้ ห้าม start ซ้ำ (port ชน) — ตรวจงานด้วย npm test / npm run typecheck
 - รันเทสต์ (`npm test`) และ `npm run typecheck` ให้ผ่านก่อนบอกว่าเสร็จ
 - อ้างอิง `docs/` (โดยเฉพาะ `05-lld.md` และ ADR) ก่อนเปลี่ยน design
 

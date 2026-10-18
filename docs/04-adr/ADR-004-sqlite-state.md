@@ -4,7 +4,7 @@
 **Supports**: NFR Durability, NFR Simplicity (`01-prd.md` §5)
 
 ## Context
-`npm run dev` (tsx watch) restart server ทุกครั้งที่แก้โค้ด ทำให้รายชื่อ ข้อปัจจุบัน และคำตอบหายระหว่างสอน/ทดลอง · ยังเป็น 1 ห้อง ~50 คน 1 process
+`npm start` (tsx watch) restart server ทุกครั้งที่แก้โค้ด ทำให้รายชื่อ ข้อปัจจุบัน และคำตอบหายระหว่างสอน/ทดลอง · ยังเป็น 1 ห้อง ~50 คน 1 process
 
 ## Options
 | Option | ข้อดี | ข้อเสีย |

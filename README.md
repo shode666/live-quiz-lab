@@ -10,10 +10,10 @@ Stack: Node.js 22.13+, Express, TypeScript, ws, vitest · state อยู่ใ�
 
 ```bash
 npm install
-npm start          # เปิดที่ port 3000 (เปลี่ยนด้วย PORT=4000 npm start)
+npm start          # auto-reload, เปิดที่ port 3000 (เปลี่ยนด้วย PORT=4000 npm start)
 ```
 
-คำสั่งอื่น: `npm run dev` (auto-reload) · `npm test` · `npm run typecheck` · `npm run reset` (ลบ DB = เริ่มคาบใหม่)
+คำสั่งอื่น: `npm test` · `npm run typecheck` · `npm run reset` (ลบ DB = เริ่มคาบใหม่)
 
 ข้อมูลเก็บที่ `data/live-quiz.db` (เปลี่ยนด้วย `DB_PATH=...`) · ตอน Node ใช้ `node:sqlite` อาจพิมพ์ `ExperimentalWarning` ซึ่งไม่เป็นอะไร
 
@@ -37,7 +37,7 @@ node -e "const {DatabaseSync}=require('node:sqlite');console.table(new DatabaseS
 ## ข้อควรรู้ (LAN / ไม่มี auth)
 
 - ออกแบบให้ใช้ใน LAN ห้องเรียนเท่านั้น **ไม่มี login** — ใครเปิด `teacher.html` ก็ publish ได้ ห้ามเปิดสู่ internet
-- restart server (รวมถึง `npm run dev` ที่ reload ทุกครั้งที่แก้โค้ด) ไม่ทำให้ state หาย: รายชื่อ นักศึกษา ข้อปัจจุบัน และคำตอบอยู่ใน DB; นักศึกษาที่เปิดหน้าค้างไว้ต้อง reconnect/join ชื่อเดิม
+- restart server (รวมถึง `npm start` ที่ reload ทุกครั้งที่แก้โค้ด) ไม่ทำให้ state หาย: รายชื่อ นักศึกษา ข้อปัจจุบัน และคำตอบอยู่ใน DB; นักศึกษาที่เปิดหน้าค้างไว้ต้อง reconnect/join ชื่อเดิม
 - เริ่มคาบใหม่ = `npm run reset` (ลบ students/answers/current เก็บโจทย์) หรือ `git checkout data/live-quiz.db` เพื่อกลับสู่สถานะตั้งต้น แล้วรัน server ใหม่
 - รายละเอียดและเหตุผลอยู่ใน `docs/04-adr/ADR-004-sqlite-state.md`
 
