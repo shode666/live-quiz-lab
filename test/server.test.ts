@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, expect, test } from 'vitest';
-import WebSocket from 'ws';
+import type WebSocket from 'ws';
 import { openDb } from '../src/db';
 import { startServer } from '../src/server';
 import { questions } from './fixtures';
+import { connect } from './helpers';
 
 let dir: string;
 let server: Awaited<ReturnType<typeof startServer>>;
@@ -31,33 +32,9 @@ afterEach(async () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-// helper: ต่อ ws แล้วเก็บทุกข้อความที่ได้รับไว้ เพื่อให้ next(type) ไม่พลาดข้อความที่มาก่อน
-async function connect() {
-  const ws = new WebSocket(`ws://localhost:${server.port}`);
-  const inbox: any[] = [];
-  const waiting: { type: string; where: (m: any) => boolean; resolve: (m: any) => void }[] = [];
-  ws.on('message', (data) => {
-    const msg = JSON.parse(data.toString());
-    const i = waiting.findIndex((w) => w.type === msg.type && w.where(msg));
-    if (i >= 0) waiting.splice(i, 1)[0].resolve(msg);
-    else inbox.push(msg);
-  });
-  await new Promise((resolve, reject) => ws.once('open', resolve).once('error', reject));
-  clients.push(ws);
-  return {
-    send: (msg: object) => ws.send(JSON.stringify(msg)),
-    // รอข้อความชนิด type (และเข้าเงื่อนไข where ถ้าระบุ); ถ้ามาถึงแล้วก็คืนทันที
-    next(type: string, where: (m: any) => boolean = () => true): Promise<any> {
-      const i = inbox.findIndex((m) => m.type === type && where(m));
-      if (i >= 0) return Promise.resolve(inbox.splice(i, 1)[0]);
-      return new Promise((resolve) => waiting.push({ type, where, resolve }));
-    },
-  };
-}
-
 test('นักเรียนตอบ -> ได้ answer:accepted และครูเห็น tally answered=1', async () => {
-  const teacher = await connect();
-  const student = await connect();
+  const teacher = await connect(server, clients);
+  const student = await connect(server, clients);
 
   teacher.send({ type: 'teacher:join' });
   student.send({ type: 'join', name: 'Ann' });

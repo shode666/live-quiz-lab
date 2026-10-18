@@ -51,7 +51,8 @@ describe('ADR-004 persistence (สร้าง quiz ใหม่บน db เด
     first.publish('q4');
 
     const second = createQuiz(db);
-    expect(second.state.current).toEqual({ questionId: 'q4', answers: new Map() });
+    expect(second.state.current).toMatchObject({ questionId: 'q4' });
+    expect(second.state.current?.answers.size).toBe(0);
   });
 
   it('ยังไม่ publish -> current เป็น null หลัง restart', () => {

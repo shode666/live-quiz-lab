@@ -1,7 +1,7 @@
 # LLD — live-quiz
 
 > model requested: fable · served: Fable 5.1 (claude-fable-5-1)
-> ต้องสอดคล้องกับ `03-hld.md` และ ADR-001..004 · ส่วนที่ติด **(I2)** ยังไม่ implement ใน Iteration 1
+> ต้องสอดคล้องกับ `03-hld.md` และ ADR-001..004 · ส่วนที่ติด **(I2)** = design ของ feature timer (Iteration 2 เป็นหนึ่งใน lab features) ยังไม่ implement ใน main · UI ตั้งค่าเริ่มต้น 30 s แต่ server คงสัญญาเดิม: ไม่ส่ง `timeLimitSec` = ไม่มี timer (UC-5 A3)
 
 ## 1. Layout
 
@@ -119,7 +119,7 @@ answer(name: string, questionId: string, choice: number, now: number = Date.now(
 closeQuestion(questionId: string): Outbound[]      // I2 — เรียกโดย timer ใน server.ts; คืน [] ถ้าไม่ใช่ current
 ```
 
-**กฎ additive (I2)** — signature ของ Iteration 1 (`publish(questionId)`, `answer(name, questionId, choice)`) ต้องยังเรียกได้เหมือนเดิมและคืน `Outbound[]` เหมือนเดิม: parameter ใหม่เป็น optional เท่านั้น · ไม่เปลี่ยน return type · `deadlineAt` **ไม่คืนจาก `publish`** แต่เก็บใน `state.current.deadlineAt` และติดไปใน `question` message · test เดิมใน `test/quiz.test.ts` ต้องผ่านโดยไม่แก้ (AGENTS.md)
+**กฎ additive (I2)** — signature ของ Iteration 1 (`publish(questionId)`, `answer(name, questionId, choice)`) ต้องยังเรียกได้เหมือนเดิมและคืน `Outbound[]` เหมือนเดิม: parameter ใหม่เป็น optional เท่านั้น · ไม่เปลี่ยน return type · `deadlineAt` **ไม่คืนจาก `publish`** แต่เก็บใน `state.current.deadlineAt` และติดไปใน `question` message · test เดิมใน `test/quiz.test.ts` ใช้ field check (`toMatchObject`) จึงไม่พังเมื่อมี field เพิ่ม และไม่ควรต้องแก้ (AGENTS.md)
 
 กฎใน `answer` (ตรวจตามลำดับ): `not_joined` → `not_current_question` → `closed` (I2: `current.closed || now >= deadlineAt`) → `already_answered` → `invalid_choice` → accept
 

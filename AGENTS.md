@@ -15,11 +15,12 @@ Node.js 22.13+ · TypeScript · Express · ws · vitest · frontend = HTML + van
 ## Folder layout
 ```
 src/quiz.ts       state + กฎ (ไม่ import ws/express) — รับ db handle, handler คืน Outbound[]
-src/db.ts         SQLite (node:sqlite): เปิดไฟล์ + สร้างตาราง + SQL ทั้งหมด
+src/db.ts         SQLite (node:sqlite): เปิดไฟล์ + สร้างตาราง + SQL ทั้งหมด + `addColumnIfMissing`
 src/messages.ts   TypeScript types ของ WebSocket contract
 src/server.ts     Express static + ws wiring (I/O เท่านั้น) — startServer() เทสต์ผ่าน WebSocket ได้ ดู test/server.test.ts
 public/           teacher.html, student.html
 test/quiz.test.ts vitest (ไม่เปิด socket)
+test/helpers.ts   `connect(server, clients)` — ws client สำหรับเทสต์ที่เปิด server จริง (import ใช้ ไม่ต้องก๊อป)
 scripts/reset.ts  เริ่มคาบใหม่ (ลบ students/answers/current)
 data/live-quiz.db SQLite ที่ commit ไว้ — โจทย์อยู่ในตาราง questions (เปลี่ยน path ด้วย DB_PATH)
 docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้างอิง design
@@ -61,9 +62,13 @@ docs/             PRD, use cases, HLD, ADR, LLD — แหล่งอ้าง�
 ## Rules
 - ห้ามเพิ่ม dependency โดยไม่ถาม
 - state อยู่ใน SQLite (`src/db.ts`) ห้ามเพิ่ม ORM/library DB อื่น
-- ห้ามเปลี่ยน WebSocket event เดิมที่ student ใช้ (เพิ่ม field optional ได้ ลบ/เปลี่ยนชื่อไม่ได้)
+- ห้ามเปลี่ยน WebSocket event เดิมที่ student ใช้ — เพิ่ม message type ใหม่, เพิ่ม field optional, และเพิ่มค่าใหม่ใน `ErrorReason` / `AnswerReject` ได้ (additive); ลบ/เปลี่ยนชื่อไม่ได้
+- เปลี่ยน schema: เพิ่มแบบ guard ใน `openDb` (`CREATE TABLE IF NOT EXISTS` หรือ `addColumnIfMissing(db, table, column, type)` ใน `src/db.ts`) เพื่อให้ `data/live-quiz.db` ที่ commit ไว้ใช้ต่อได้ ไม่ต้องลบไฟล์; ถ้าจำเป็นต้องอัปเดตไฟล์ db ที่ commit ให้ทำเป็น commit แยก
 - ห้ามแก้เทสต์เดิมโดยไม่ถาม (เพิ่มเทสต์ใหม่ได้)
 - server รันอยู่แล้วด้วย npm start ใน terminal ของผู้ใช้ ห้าม start ซ้ำ (port ชน) — ตรวจงานด้วย npm test / npm run typecheck
+  - ต้องลอง UI หรือตรวจมือ: เปิด instance ที่สองแยก port และแยก db (ไม่แตะ `data/live-quiz.db` ที่ commit): `PORT=3001 DB_PATH=/tmp/live-quiz-try.db npm start`
+    (Windows PowerShell: `$env:PORT=3001; $env:DB_PATH="$env:TEMP\\live-quiz-try.db"; npm start`)
+  - หยุดด้วย Ctrl+C หรือ kill ด้วย PID ห้าม pkill/killall
 - รันเทสต์ (`npm test`) และ `npm run typecheck` ให้ผ่านก่อนบอกว่าเสร็จ
 - อ้างอิง `docs/` (โดยเฉพาะ `05-lld.md` และ ADR) ก่อนเปลี่ยน design
 

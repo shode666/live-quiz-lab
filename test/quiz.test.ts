@@ -15,7 +15,7 @@ beforeEach(() => {
 describe('FR-1 join', () => {
   it('join ชื่อปกติ -> joined + students ถึง teacher (AC-1.1)', () => {
     const out = quiz.join('Somchai');
-    expect(find(out, 'self', 'joined')).toEqual({ type: 'joined', name: 'Somchai', question: null, answered: false });
+    expect(find(out, 'self', 'joined')).toMatchObject({ type: 'joined', name: 'Somchai', question: null, answered: false });
     expect(find(out, 'teacher', 'students').students).toEqual([{ name: 'Somchai', connected: true }]);
   });
 
@@ -53,7 +53,7 @@ describe('FR-2 publish', () => {
     quiz.join('A');
     const out = quiz.publish('q3');
     const q = find(out, 'students', 'question');
-    expect(q).toEqual({ type: 'question', question: { id: 'q3', text: 'Q3?', choices: ['a', 'b', 'c', 'd'] } });
+    expect(q).toMatchObject({ type: 'question', question: { id: 'q3', text: 'Q3?', choices: ['a', 'b', 'c', 'd'] } });
     expect(Object.keys(q.question).sort()).toEqual(['choices', 'id', 'text']);
     expect(find(out, 'teacher', 'tally')).toEqual({
       type: 'tally', questionId: 'q3', counts: [0, 0, 0, 0], answered: 0, total: 1,

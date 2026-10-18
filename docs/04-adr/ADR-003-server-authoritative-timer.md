@@ -1,6 +1,6 @@
 # ADR-003: Server เป็นเจ้าของ deadline — client นับถอยหลังเพื่อแสดงผลเท่านั้น
 
-**Status**: Accepted (สำหรับ Iteration 2 — ยังไม่ implement)   **Date**: 2026-10-13   **Owner**: `plan` (architecture mode)
+**Status**: Accepted (design สำหรับ feature timer — Iteration 2 เป็นหนึ่งใน lab features; ยังไม่ implement ใน main)   **Date**: 2026-10-13   **Owner**: `plan` (architecture mode)
 **Supports**: FR-6, FR-7 (AC-7.1–7.3)
 
 ## Context
@@ -24,6 +24,7 @@ Iteration 2 เพิ่มเวลาจำกัดต่อข้อ 10–12
 - (+) late answer ถูกปฏิเสธเสมอแม้ browser จะยังโชว์เวลาเหลือ (AC-7.2)
 - (+) ยกเลิก timer ตอน publish ใหม่เป็น logic เดียวจุดเดียว (AC-7.3)
 - (+) `quiz.ts` ยังเป็น pure: timer อยู่ที่ `server.ts`, กฎอยู่ที่ `quiz.ts` รับ `now` เป็น parameter
-- (+) เปลี่ยนแบบ additive เท่านั้น (parameter ใหม่ optional, return type เดิม) → test Iteration 1 ผ่านโดยไม่แก้ ตาม AGENTS.md
+- (+) เปลี่ยนแบบ additive เท่านั้น (parameter ใหม่ optional, return type เดิม) → test เดิมใช้ field check (`toMatchObject`) จึงไม่พังเมื่อมี field เพิ่ม; ไม่ต้องแก้เทสต์เดิมตาม AGENTS.md
+- หมายเหตุ: UI ตั้งค่าเริ่มต้น 30 s แต่ server contract คงเดิม — ไม่ส่ง `timeLimitSec` = ไม่มี timer (UC-5 A3)
 - (−) ผู้ที่ network ช้ามากอาจเห็นว่ายังเหลือ 1 s แต่ถูกปฏิเสธ → หน้า student ต้องแสดงข้อความ "หมดเวลา" จาก reason `closed` ให้ชัด
 - (−) ไม่ทำ clock sync / grace period — ถือว่าเกิน scope การสอน

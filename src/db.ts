@@ -1,5 +1,5 @@
 // SQLite (node:sqlite) — SQL ทั้งหมดอยู่ที่ไฟล์นี้ที่เดียว (ADR-004)
-// ไม่มี ORM / migration: CREATE TABLE IF NOT EXISTS ตอนเปิด
+// ไม่มี ORM / migration: CREATE TABLE IF NOT EXISTS ตอนเปิด; คอลัมน์ใหม่ใช้ addColumnIfMissing
 import fs from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -33,6 +33,14 @@ export function openDb(file: string): DatabaseSync {
     );
   `);
   return db;
+}
+
+// เพิ่มคอลัมน์ถ้ายังไม่มี — ให้ db ที่ commit ไว้ (ไม่มีคอลัมน์ใหม่) ใช้ต่อได้; เรียกใน openDb หลัง CREATE TABLE
+// ตัวอย่าง: addColumnIfMissing(db, 'current', 'closed', 'INTEGER NOT NULL DEFAULT 0')
+// (table/column/type ต้องเป็นค่าคงที่ในโค้ด ไม่ใช่ input จากผู้ใช้)
+export function addColumnIfMissing(db: DatabaseSync, table: string, column: string, type: string) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
 }
 
 export type Snapshot = {
