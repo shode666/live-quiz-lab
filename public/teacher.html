@@ -4,33 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Live Quiz - Teacher</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
-    .cols { display: flex; gap: 2rem; flex-wrap: wrap; }
-    .cols > div { flex: 1; min-width: 300px; }
-    .q { border: 1px solid #ccc; border-radius: 6px; padding: .6rem; margin: .5rem 0; }
-    .q.active { border-color: #2563eb; background: #eff6ff; }
-    .row { margin: .6rem 0; font-size: 1.25rem; }
-    .track { background: #e5e7eb; height: 1.2rem; border-radius: 4px; overflow: hidden; }
-    .fill { background: #2563eb; height: 100%; }
-    .off { color: #999; }
-    #conn { color: #b91c1c; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<main class="teacher">
   <h1>Live Quiz - Teacher <small id="conn"></small></h1>
   <div class="cols">
-    <div>
+    <div class="card">
       <h2>โจทย์</h2>
       <div id="questions"></div>
     </div>
-    <div>
+    <div class="card">
       <h2>ผลรวมสด</h2>
       <div id="tally">ยังไม่ได้ publish</div>
       <h2>นักศึกษา (<span id="count">0</span>)</h2>
       <ul id="students"></ul>
     </div>
   </div>
+</main>
 
   <script>
     let ws = null;
