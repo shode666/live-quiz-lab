@@ -29,7 +29,7 @@
 git clone https://github.com/shode666/live-quiz-lab.git
 cd live-quiz-lab
 npm install
-npm test            # ต้องเห็น Tests 26 passed
+npm test            # ต้องเห็น passed ทั้งหมด ไม่มี failed
 git checkout -b my-lab
 npm start           # เปิดค้างไว้ใน terminal นี้ แก้โค้ดแล้ว restart เอง
 ```
