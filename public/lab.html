@@ -51,6 +51,7 @@ body { padding: var(--space-4); }
 .codeblock header button.done { color: var(--ok); border-color: var(--ok); }
 .codeblock pre { margin: 0; padding: var(--space-3) var(--space-4); overflow-x: auto; }
 #lab .codeblock pre code { background: none; padding: 0; font-size: .85rem; white-space: pre; overflow-wrap: normal; }
+#lab .codeblock pre.wrap code { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .tablewrap { overflow-x: auto; margin: 0 0 var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 #lab table { border-collapse: collapse; width: 100%; min-width: 30rem; font-size: var(--fs-sm); line-height: 1.6; background: var(--surface); }
@@ -168,6 +169,7 @@ body { padding: var(--space-4); }
     });
     head.appendChild(btn);
     var pre = el('pre'); var code = el('code', null, text);
+    if (!lang || lang === 'text') pre.className = 'wrap';
     pre.appendChild(code);
     pre.tabIndex = 0;
     box.appendChild(head); box.appendChild(pre);
