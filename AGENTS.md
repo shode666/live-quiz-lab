@@ -17,7 +17,7 @@ Node.js 22.13+ · TypeScript · Express · ws · vitest · frontend = HTML + van
 src/quiz.ts       state + กฎ (ไม่ import ws/express) — รับ db handle, handler คืน Outbound[]
 src/db.ts         SQLite (node:sqlite): เปิดไฟล์ + สร้างตาราง + SQL ทั้งหมด
 src/messages.ts   TypeScript types ของ WebSocket contract
-src/server.ts     Express static + ws wiring (I/O เท่านั้น)
+src/server.ts     Express static + ws wiring (I/O เท่านั้น) — startServer() เทสต์ผ่าน WebSocket ได้ ดู test/server.test.ts
 public/           teacher.html, student.html
 test/quiz.test.ts vitest (ไม่เปิด socket)
 scripts/reset.ts  เริ่มคาบใหม่ (ลบ students/answers/current)

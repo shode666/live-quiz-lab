@@ -7,7 +7,7 @@
 
 ```
 live-quiz/
-├── package.json          # scripts: start (tsx src/server.ts), test (vitest), reset (ลบ DB)
+├── package.json          # scripts: start (tsx watch src/server.ts), test (vitest), reset (ลบ DB)
 ├── tsconfig.json
 ├── scripts/reset.ts      # npm run reset: ลบ students/answers/current (เก็บ questions)
 ├── data/live-quiz.db     # SQLite ที่ commit ไว้ (มีโจทย์ในตาราง questions, DB_PATH override)
@@ -25,7 +25,7 @@ live-quiz/
 
 หน้าที่ต่อไฟล์
 - `quiz.ts` — `createQuiz(db)` (db = `DatabaseSync`; โจทย์โหลดจากตาราง questions) คืน object ที่มี `state` และ handlers (§4) · ทุก handler **คืน list ของ outbound messages** ไม่ส่งเอง
-- `server.ts` — `openDb(DB_PATH)` → `createQuiz(db)` → เปิด Express (`public/` + `GET /questions.json` ตอบรายการโจทย์จาก DB) → เปิด `ws` บน server เดียวกัน (port 3000) → ต่อ socket: parse JSON → เรียก handler → ส่ง outbound ตาม `to` → `close` เรียก `disconnect`
+- `server.ts` — export `startServer({ port, dbPath })` → คืน `{ port, close() }` (port 0 = OS เลือก; `close()` ปิด ws clients/wss/http/db; `npm start` เรียกผ่าน `if (require.main === module)` โดยอ่าน `PORT`/`DB_PATH`; ตัวอย่างเทสต์ `test/server.test.ts`) · ภายใน: `openDb(dbPath)` → `createQuiz(db)` → เปิด Express (`public/` + `GET /questions.json` ตอบรายการโจทย์จาก DB) → เปิด `ws` บน server เดียวกัน (port 3000) → ต่อ socket: parse JSON → เรียก handler → ส่ง outbound ตาม `to` → `close` เรียก `disconnect`
 - `db.ts` — `openDb(file)` สร้างโฟลเดอร์/ไฟล์ + `CREATE TABLE IF NOT EXISTS` (questions, students, current, answers) · `createStore(db)` = SQL ทั้งหมด: `resetConnected`, `load`, `saveStudent`, `setCurrent` (เคลียร์ answers ใน transaction), `saveAnswer`
 - `messages.ts` — types เท่านั้น ให้ทั้ง `quiz.ts`, `server.ts`, test ใช้ร่วมกัน
 
