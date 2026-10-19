@@ -11,6 +11,7 @@
 | ขั้น | ทำอะไร | เวลาโดยประมาณ |
 |---|---|---|
 | 1 | Setup | 5 นาที |
+| Demo | อาจารย์ทำให้ดูบนจอ — ดูอย่างเดียว ไม่ต้องทำตาม | 10 นาที |
 | 2 | Warm-up: ทำ demo ซ้ำเอง (จำนักศึกษาด้วย token) | 15–20 นาที |
 | 3 | เลือก feature จากเมนู | 2 นาที |
 | 4 | Requirement → Design | 10 นาที |
@@ -40,6 +41,91 @@ npm start           # เปิดค้างไว้ใน terminal นี้
 - ExperimentalWarning ของ SQLite ตอนรัน = ปกติ ไม่ต้องสนใจ
 
 **ข้อมูลอยู่ใน `data/live-quiz.db`** (SQLite ไฟล์เดียว commit ไว้ใน repo) เล่นแล้วอยากเริ่มใหม่: `npm run reset` หรือ `git checkout data/live-quiz.db`
+
+---
+
+<!-- demo:start -->
+## Demo: จำนักศึกษาคนเดิมด้วย token (อาจารย์ทำให้ดู)
+
+> 🎬 DEMO — อาจารย์ทำให้ดูบนจอ ไม่ต้องทำตาม ขั้น 2 (Warm-up) คือให้ทำซ้ำเอง
+
+**ปัญหาที่โชว์:** นักศึกษา refresh หน้าแล้วต้องพิมพ์ชื่อใหม่ และถ้าเจ้าของชื่อหลุด คนอื่นพิมพ์ชื่อเดียวกันแล้วได้สถานะของเขาไปเลย (สวมชื่อ)
+
+**1. Explore** — ให้ agent อ่านและอธิบาย ยังไม่แก้ไฟล์
+
+```text
+อ่าน AGENTS.md, src/quiz.ts (join, disconnect) และ public/student.html แล้วอธิบายว่า
+(1) ตอนนักศึกษาหลุดหรือ refresh หน้า ระบบจำเขาได้ยังไง
+(2) ถ้าคนอื่น join ด้วยชื่อเดียวกันตอนที่เจ้าของชื่อหลุดอยู่ จะเกิดอะไร
+ยังไม่ต้องแก้ไฟล์ใด ๆ
+```
+
+**2. Plan** — Goal / Context / Constraints / Done when แล้วให้เสนอแผนก่อนแก้
+
+```text
+เสนอแผนให้ระบบจำนักศึกษาคนเดิมได้
+
+Goal: นักศึกษา refresh หน้าแล้วกลับเข้าห้องเป็นคนเดิมเองโดยไม่ต้องพิมพ์ชื่อ และคนอื่นใช้ชื่อของคนที่หลุดไปไม่ได้
+
+Context: join และ disconnect ใน src/quiz.ts, ตาราง students ใน src/db.ts, public/student.html, AC-1.4 ใน docs/01-prd.md, docs/04-adr/ADR-004-sqlite-state.md
+
+Constraints:
+- ห้ามเพิ่ม library (ใช้ crypto ของ Node ได้)
+- ห้ามเปลี่ยน event เดิม เพิ่ม field optional ได้
+- quiz.ts ต้องยัง pure ไม่ import ws/express
+- token เก็บในตาราง students ผ่าน src/db.ts (node:sqlite ที่มีอยู่) และ localStorage ฝั่ง browser ไม่ต้องมี login, JWT, session library หรือ library ใหม่
+- token ห้ามไปโผล่ใน message ที่ส่งถึงอาจารย์หรือนักศึกษาคนอื่น
+- data/live-quiz.db ที่ commit ไว้ต้องใช้ต่อได้ (เพิ่ม column ด้วย addColumnIfMissing ใน openDb)
+
+Done when:
+- join ครั้งแรกได้ token กลับมาใน joined
+- join ชื่อเดิมพร้อม token ที่ถูก ได้สถานะเดิม (answered)
+- join ชื่อเดิมแต่ token ผิดหรือไม่มี ได้ name_taken แม้เจ้าของจะ offline
+- refresh browser แล้วกลับเข้าห้องเองโดยไม่ต้องพิมพ์ชื่อ
+- มีเทสต์ใหม่ครอบทุกข้อ, npm test และ npm run typecheck ผ่าน
+
+ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ: ไฟล์ที่จะแก้, message ที่เปลี่ยน, เทสต์ที่จะเพิ่ม/เปลี่ยน แล้วรอผมอนุมัติ
+```
+
+ถ้าแผนเกิน (JWT / bcrypt / cookie-session / login / ORM / ไฟล์ใหม่หลายไฟล์) อาจารย์สั่งตัด:
+
+```text
+ตัดให้เหลือแค่ token สุ่มด้วย crypto.randomUUID เก็บเป็นคอลัมน์ในตาราง students คู่กับชื่อ และเก็บใน localStorage ฝั่ง browser ไม่ต้องมีระบบ login หรือ library ใหม่ ดูตาราง "ใช้ของที่มีอยู่แล้ว" ใน AGENTS.md เสนอแผนใหม่
+```
+
+agent มักถามกลับก่อนลงมือ อาจารย์ตอบ:
+- ชื่อที่มีในตารางแต่ token ยังว่าง (NULL) → คนแรกที่ join ได้ชื่อไปพร้อม token ใหม่
+- ต้องไฮไลต์ปุ่มที่เคยเลือกไหม → ไม่ต้อง answered พอ
+- แก้เทสต์เดิมได้ไหม → ได้ 3 ตัวนั้น เฉพาะส่ง token
+- ต้องเขียน ADR ใหม่ไหม → ไม่ต้อง บันทึกใน LLD พอ
+- refresh เทสต์ยังไง → ตรวจด้วยมือ ไม่เพิ่ม library
+
+**3. Implement**
+
+```text
+แผนโอเค ลงมือได้
+แก้ได้เฉพาะเทสต์เดิมที่ join ชื่อเดิมซ้ำโดยไม่ส่ง token (AC-1.4 ใน test/quiz.test.ts และใน test/persistence.test.ts) ให้ส่ง token เดิมเข้าไป assertion ห้ามเปลี่ยน เทสต์อื่นห้ามแตะ
+ชื่อที่ token เป็น NULL ให้คนแรกที่ join ได้ไปพร้อม token ใหม่ / answered พอ ไม่ต้องไฮไลต์คำตอบเดิม / refresh ตรวจด้วยมือ ไม่เพิ่ม library / ไม่ต้องเขียน ADR ใหม่
+ทำทีละขั้น commit เมื่อแต่ละขั้นผ่าน แล้วรัน npm test กับ npm run typecheck แสดง output จริงให้ดู
+```
+
+**4. Verify** — อาจารย์รันเองใน terminal ไม่เชื่อคำว่า "เสร็จแล้ว"
+
+```bash
+npm test
+npm run typecheck
+git diff main --stat
+git diff main -- test
+```
+
+แล้วลองจริง: join เป็น Alice ตอบ 1 ข้อ → refresh → กลับมาเป็น Alice เอง / ปิดหน้าต่าง แล้วเปิด incognito พิมพ์ Alice → ได้ `name_taken`
+
+**สิ่งที่ให้สังเกต**
+- ตอน Explore agent อธิบายช่องโหว่สวมชื่อได้เอง โดยไม่ต้องบอกว่ามีช่องโหว่
+- แผนที่เกินถูกตัดอะไรออก และอาจารย์ใช้ประโยคไหนตัด
+- เทสต์เดิม 3 ตัวเปลี่ยน เพราะ requirement เปลี่ยน (ต้องส่ง token) ไม่ใช่แก้เทสต์ให้ผ่าน — ดูใน `git diff main -- test` ว่าบรรทัด `-` มีแค่จุดนั้น
+- ช่องโหว่จริงอยู่ที่ว่า **server ตรวจ token** ไหม ถ้าแค่จำชื่อไว้ใน localStorage ช่องโหว่ยังอยู่ครบ
+<!-- demo:end -->
 
 ---
 
