@@ -59,6 +59,15 @@ body { padding: var(--space-4); }
 #lab th { background: var(--track); white-space: nowrap; }
 #lab tr:last-child td { border-bottom: 0; }
 
+.demo-box { position: relative; margin: var(--space-6) 0 var(--space-5); padding: var(--space-2) var(--space-4) var(--space-3);
+  border: 2px dashed var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+.demo-badge { position: absolute; top: 0; left: var(--space-4); transform: translateY(-50%);
+  padding: .1rem var(--space-3); border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast);
+  font-size: var(--fs-sm); font-weight: 700; letter-spacing: .08em; line-height: 1.6; }
+#lab .demo-box h2 { margin-top: var(--space-3); scroll-margin-top: var(--space-6); }
+#lab .demo-box blockquote { background: var(--surface); }
+@media (max-width: 30rem) { .demo-box { padding-left: var(--space-3); padding-right: var(--space-3); } }
+
 .lab-error { padding: var(--space-5); background: var(--surface); border: 1px solid var(--danger);
   border-radius: var(--radius); color: var(--danger); }
 
@@ -311,6 +320,25 @@ body { padding: var(--space-4); }
     }
   }
 
+  // <!-- demo:start --> ... <!-- demo:end --> -> boxed "DEMO" section (comments stay invisible in plain markdown)
+  var RE_DEMO_START = /^\s*<!--\s*demo:start\s*-->\s*$/, RE_DEMO_END = /^\s*<!--\s*demo:end\s*-->\s*$/;
+  function parseDoc(lines, out, headings) {
+    var seg = [], box = null;
+    function flush() { parse(seg, box || out, headings); seg = []; }
+    lines.forEach(function (l) {
+      if (!box && RE_DEMO_START.test(l)) {
+        flush();
+        box = el('section', 'demo-box');
+        var badge = el('span', 'demo-badge', 'DEMO'); badge.setAttribute('aria-hidden', 'true');
+        box.appendChild(badge);
+      } else if (box && RE_DEMO_END.test(l)) {
+        flush(); out.appendChild(box); box = null;
+      } else seg.push(l);
+    });
+    flush();
+    if (box) out.appendChild(box); // unclosed marker: still render what we have
+  }
+
   // ---------- TOC ----------
   function buildToc(headings) {
     var resetBtn = document.getElementById('resetBtn');
@@ -368,7 +396,7 @@ body { padding: var(--space-4); }
     return r.text();
   }).then(function (md) {
     var out = document.createDocumentFragment(), headings = [];
-    parse(md.replace(/\r\n?/g, '\n').split('\n'), out, headings);
+    parseDoc(md.replace(/\r\n?/g, '\n').split('\n'), out, headings);
     lab.textContent = '';
     lab.appendChild(out);
     var t = lab.querySelector('h1');
