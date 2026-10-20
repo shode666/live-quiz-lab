@@ -119,6 +119,7 @@ export async function startServer(opts: { port: number; dbPath: string }) {
 if (require.main === module) {
   const port = Number(process.env.PORT) || 3000;
   startServer({ port, dbPath: process.env.DB_PATH || DEFAULT_DB_PATH }).then(() => {
+    console.log(`Lab:       http://localhost:${port}/lab.html`);
     console.log(`live-quiz: http://localhost:${port}/teacher.html  |  http://localhost:${port}/student.html`);
     for (const addrs of Object.values(os.networkInterfaces())) {
       for (const a of addrs ?? []) {
