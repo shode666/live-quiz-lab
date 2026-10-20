@@ -11,8 +11,7 @@
 | ขั้น | ทำอะไร | เวลาโดยประมาณ |
 |---|---|---|
 | 1 | Setup | 5 นาที |
-| Demo | วิทยากรทำให้ดูบนจอ — ดูอย่างเดียว ไม่ต้องทำตาม | 10 นาที |
-| 2 | Warm-up: ทำ demo ซ้ำเอง (จำนักศึกษาด้วย token) | 15–20 นาที |
+| 2 | Warm-up: จำนักศึกษาด้วย token — ทำไปพร้อมวิทยากรบนจอ | 20–25 นาที |
 | 3 | เลือก 1 feature แล้วทำตามบทของมัน: Requirement → Design → Explore → Plan → Implement → Verify | 30–90 นาที ตามความยาก |
 | 4 | ทบทวน | 5 นาที |
 
@@ -42,94 +41,9 @@ npm start           # เปิดค้างไว้ใน terminal นี้
 
 ---
 
-<!-- demo:start -->
-## Demo: จำนักศึกษาคนเดิมด้วย token (วิทยากรทำให้ดู)
+## 2. Warm-up: จำนักศึกษาคนเดิมด้วย token (ทำไปพร้อมวิทยากร)
 
-> 🎬 DEMO — วิทยากรทำให้ดูบนจอ ไม่ต้องทำตาม ขั้น 2 (Warm-up) คือให้ทำซ้ำเอง
-
-**ปัญหาที่โชว์:** นักศึกษา refresh หน้าแล้วต้องพิมพ์ชื่อใหม่ และถ้าเจ้าของชื่อหลุด คนอื่นพิมพ์ชื่อเดียวกันแล้วได้สถานะของเขาไปเลย (สวมชื่อ)
-
-**1. Explore** — ให้ agent อ่านและอธิบาย ยังไม่แก้ไฟล์
-
-```text
-อ่าน AGENTS.md, src/quiz.ts (join, disconnect) และ public/student.html แล้วอธิบายว่า
-(1) ตอนนักศึกษาหลุดหรือ refresh หน้า ระบบจำเขาได้ยังไง
-(2) ถ้าคนอื่น join ด้วยชื่อเดียวกันตอนที่เจ้าของชื่อหลุดอยู่ จะเกิดอะไร
-ยังไม่ต้องแก้ไฟล์ใด ๆ
-```
-
-**2. Plan** — Goal / Context / Constraints / Done when แล้วให้เสนอแผนก่อนแก้
-
-```text
-เสนอแผนให้ระบบจำนักศึกษาคนเดิมได้
-
-Goal: นักศึกษา refresh หน้าแล้วกลับเข้าห้องเป็นคนเดิมเองโดยไม่ต้องพิมพ์ชื่อ และคนอื่นใช้ชื่อของคนที่หลุดไปไม่ได้
-
-Context: join และ disconnect ใน src/quiz.ts, ตาราง students ใน src/db.ts, public/student.html, AC-1.4 ใน docs/01-prd.md, docs/04-adr/ADR-004-sqlite-state.md
-
-Constraints:
-- ห้ามเพิ่ม library (ใช้ crypto ของ Node ได้)
-- ห้ามเปลี่ยน event เดิม เพิ่ม field optional ได้
-- quiz.ts ต้องยัง pure ไม่ import ws/express
-- token เก็บในตาราง students ผ่าน src/db.ts (node:sqlite ที่มีอยู่) และ localStorage ฝั่ง browser ไม่ต้องมี login, JWT, session library หรือ library ใหม่
-- token ห้ามไปโผล่ใน message ที่ส่งถึงอาจารย์หรือนักศึกษาคนอื่น
-- data/live-quiz.db ที่ commit ไว้ต้องใช้ต่อได้ (เพิ่ม column ด้วย addColumnIfMissing ใน openDb)
-
-Done when:
-- join ครั้งแรกได้ token กลับมาใน joined
-- join ชื่อเดิมพร้อม token ที่ถูก ได้สถานะเดิม (answered)
-- join ชื่อเดิมแต่ token ผิดหรือไม่มี ได้ name_taken แม้เจ้าของจะ offline
-- refresh browser แล้วกลับเข้าห้องเองโดยไม่ต้องพิมพ์ชื่อ
-- มีเทสต์ใหม่ครอบทุกข้อ, npm test และ npm run typecheck ผ่าน
-
-ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ: ไฟล์ที่จะแก้, message ที่เปลี่ยน, เทสต์ที่จะเพิ่ม/เปลี่ยน แล้วรอผมอนุมัติ
-```
-
-ถ้าแผนเกิน (JWT / bcrypt / cookie-session / login / ORM / ไฟล์ใหม่หลายไฟล์) วิทยากรสั่งตัด:
-
-```text
-ตัดให้เหลือแค่ token สุ่มด้วย crypto.randomUUID เก็บเป็นคอลัมน์ในตาราง students คู่กับชื่อ และเก็บใน localStorage ฝั่ง browser ไม่ต้องมีระบบ login หรือ library ใหม่ ดูตาราง "ใช้ของที่มีอยู่แล้ว" ใน AGENTS.md เสนอแผนใหม่
-```
-
-agent มักถามกลับก่อนลงมือ วิทยากรตอบ:
-- ชื่อที่มีในตารางแต่ token ยังว่าง (NULL) → คนแรกที่ join ได้ชื่อไปพร้อม token ใหม่
-- ต้องไฮไลต์ปุ่มที่เคยเลือกไหม → ไม่ต้อง answered พอ
-- แก้เทสต์เดิมได้ไหม → ได้ 3 ตัวนั้น เฉพาะส่ง token
-- ต้องเขียน ADR ใหม่ไหม → ไม่ต้อง บันทึกใน LLD พอ
-- refresh เทสต์ยังไง → ตรวจด้วยมือ ไม่เพิ่ม library
-
-**3. Implement**
-
-```text
-แผนโอเค ลงมือได้
-แก้ได้เฉพาะเทสต์เดิมที่ join ชื่อเดิมซ้ำโดยไม่ส่ง token (AC-1.4 ใน test/quiz.test.ts และใน test/persistence.test.ts) ให้ส่ง token เดิมเข้าไป assertion ห้ามเปลี่ยน เทสต์อื่นห้ามแตะ
-ชื่อที่ token เป็น NULL ให้คนแรกที่ join ได้ไปพร้อม token ใหม่ / answered พอ ไม่ต้องไฮไลต์คำตอบเดิม / refresh ตรวจด้วยมือ ไม่เพิ่ม library / ไม่ต้องเขียน ADR ใหม่
-ทำทีละขั้น commit เมื่อแต่ละขั้นผ่าน แล้วรัน npm test กับ npm run typecheck แสดง output จริงให้ดู
-```
-
-**4. Verify** — วิทยากรรันเองใน terminal ไม่เชื่อคำว่า "เสร็จแล้ว"
-
-```bash
-npm test
-npm run typecheck
-git diff main --stat
-git diff main -- test
-```
-
-แล้วลองจริง: join เป็น Alice ตอบ 1 ข้อ → refresh → กลับมาเป็น Alice เอง / ปิดหน้าต่าง แล้วเปิด incognito พิมพ์ Alice → ได้ `name_taken`
-
-**สิ่งที่ให้สังเกต**
-- ตอน Explore agent อธิบายช่องโหว่สวมชื่อได้เอง โดยไม่ต้องบอกว่ามีช่องโหว่
-- แผนที่เกินถูกตัดอะไรออก และวิทยากรใช้ประโยคไหนตัด
-- เทสต์เดิม 3 ตัวเปลี่ยน เพราะ requirement เปลี่ยน (ต้องส่ง token) ไม่ใช่แก้เทสต์ให้ผ่าน — ดูใน `git diff main -- test` ว่าบรรทัด `-` มีแค่จุดนั้น
-- ช่องโหว่จริงอยู่ที่ว่า **server ตรวจ token** ไหม ถ้าแค่จำชื่อไว้ใน localStorage ช่องโหว่ยังอยู่ครบ
-<!-- demo:end -->
-
----
-
-## 2. Warm-up: จำนักศึกษาคนเดิมด้วย token
-
-ทำ feature เดียวกับที่ดูใน demo ด้วยมือตัวเอง prompt ให้ copy ทุกขั้น รอบนี้โฟกัสที่ **การอ่านแผน** กับ **การ verify**
+วิทยากรทำบนจอทีละขั้น เราส่ง prompt ขั้นเดียวกันใน repo ของตัวเองไปพร้อมกัน แล้วเทียบคำตอบของ agent เรากับบนจอ — agent แต่ละเครื่องตอบไม่เหมือนกันเป๊ะ นั่นคือเรื่องปกติ prompt ให้ copy ทุกขั้น รอบนี้โฟกัสที่ **การอ่านแผน** กับ **การ verify**
 
 **ปัญหาตอนนี้:** refresh หน้านักศึกษาแล้วต้องพิมพ์ชื่อใหม่ และถ้าเจ้าของชื่อหลุด คนอื่นพิมพ์ชื่อเดียวกันแล้วได้สถานะของเขาไปเลย (สวมชื่อ) — ลองทำให้เห็นกับตาก่อน
 
@@ -220,12 +134,12 @@ git diff main -- test
 
 | Feature | ระดับ | เวลา* | แตะส่วนไหน |
 |---|---|---|---|
-| A. เลือก Theme | ง่าย | 25–35 นาที | `public/*` เท่านั้น |
-| B. ตั้งเวลาก่อน publish | กลาง | 45–70 นาที | teacher.html, student.html, quiz.ts, db.ts, messages.ts, server.ts |
-| C. อาจารย์เพิ่ม / ลบโจทย์ | กลาง | 45–60 นาที | teacher.html, quiz.ts, db.ts, messages.ts, server.ts |
-| D. หน้ารวมคะแนน | ยาก | 60–90 นาที | ทุกชั้น รวม schema |
+| A. ตั้งเวลาก่อน publish | กลาง | 45–70 นาที | teacher.html, student.html, quiz.ts, db.ts, messages.ts, server.ts |
+| B. อาจารย์เพิ่ม / ลบโจทย์ | กลาง | 45–60 นาที | teacher.html, quiz.ts, db.ts, messages.ts, server.ts |
+| C. หน้ารวมคะแนน | ยาก | 60–90 นาที | ทุกชั้น รวม schema |
+| D. เลือก Theme | ง่าย | 25–35 นาที | `public/*` เท่านั้น |
 
-\*เวลาจริงจากการซ้อมสำหรับคนที่ใช้ agent ครั้งแรก ไม่แน่ใจ → เริ่มจาก A
+\*เวลาจริงจากการซ้อมสำหรับคนที่ใช้ agent ครั้งแรก ไม่แน่ใจ → เริ่มจาก D (Theme)
 
 แต่ละ feature มีบทครบ 5 ขั้น: **Requirement → Design → Explore → Plan → Implement → Verify** copy prompt ไปส่งทีละขั้น รอ agent ตอบ อ่านคำตอบ แล้วค่อยส่งขั้นถัดไป เรื่องที่ต้องตัดสินใจ ตัดสินไว้ให้แล้วในหัวข้อ "ตัดสินใจไว้แล้ว" และใส่ไว้ใน prompt แล้ว งานของเราคือ **ตรวจว่า agent ทำตามนั้นจริง**
 
@@ -235,88 +149,7 @@ git diff main -- test
 - **Verify** — รันเองใน terminal อย่าเชื่อคำว่า "เสร็จแล้ว"
 
 <!-- tabs:start -->
-### A. เลือก Theme
-
-ผู้ใช้เลือก theme ได้ทั้งหน้าอาจารย์และหน้านักศึกษา: Minimal (ปัจจุบัน, default), Liquid Glass, Glassmorphism, Claymorphism, Neumorphism และระบบจำที่เลือกไว้
-
-ตัดสินใจไว้แล้ว:
-- theme = attribute `data-theme` บน `<html>` + override CSS variable ใน `public/style.css` (Minimal = ค่า `:root` เดิม)
-- โค้ดเลือก theme อยู่ใน `public/theme.js` ไฟล์เดียว ใช้ร่วมสองหน้า
-- โหลด `theme.js` ใน `<head>` ต่อจาก `style.css` แบบไม่มี `defer` → ตั้ง theme ก่อนหน้าแสดง reload แล้วไม่กะพริบ
-- ค่าใน localStorage เสีย หรืออ่านไม่ได้ (throw) → ใช้ Minimal เงียบ ๆ
-- AC ตรวจด้วยมือ ไม่เขียนเทสต์
-
-กับดัก: บนพื้นกระจก ตัวอักษรจางจนอ่านไม่ออก โดยเฉพาะปุ่มที่ถูก disable — ต้อง **ดูทุก theme ด้วยตา** ทั้งจอมือถือ (devtools → toggle device) และจอใหญ่ และเลื่อนลงจนสุดหน้า (พื้นหลัง gradient มักไม่เต็มหน้า) ก่อนบอกว่าเสร็จ
-
-agent ชอบทำเกิน: ThemeManager class, ไฟล์ CSS แยกต่อ theme, dark mode, เก็บ theme ที่ server, เขียนเทสต์ให้ CSS
-
-#### A1 · Requirement → Design
-
-```text
-ช่วยร่าง docs/features/theme.md สำหรับ feature: ผู้ใช้เลือก theme ได้ทั้งหน้าอาจารย์และหน้านักศึกษา — Minimal (ปัจจุบัน, default), Liquid Glass, Glassmorphism, Claymorphism, Neumorphism และ browser จำที่เลือกไว้
-อ่าน AGENTS.md, public/style.css, public/teacher.html และ public/student.html ก่อน แล้วร่างหัวข้อ:
-- User story 1 ประโยค
-- Acceptance criteria 5 ข้อ ตรวจด้วยมือได้ (ทำอะไร แล้วต้องเห็นอะไร): ไม่เคยเลือก = Minimal / เลือกแล้วเปลี่ยนทันที refresh แล้วยังอยู่ และอีกหน้าก็ได้ theme เดียวกัน / reload แล้วไม่กะพริบเป็น Minimal ก่อน / ค่าใน localStorage เสียแล้วได้ Minimal ไม่มี error / ทุก theme อ่านตัวอักษรและปุ่มที่ disable ออก ทั้งจอ 375px และ ≥1280px เลื่อนจนสุดหน้า
-- Edge cases แยก "เก็บ" กับ "ตัด" — ตัด: dark mode, เก็บ theme ที่ server, ThemeManager class, ไฟล์ CSS แยกต่อ theme, เทสต์อัตโนมัติ
-- ไฟล์ที่ต้องแตะ: public/style.css, public/theme.js (ใหม่), public/teacher.html, public/student.html — ไม่มี message ใหม่
-- Mini-ADR: theme = data-theme บน <html> + override CSS variable ใน style.css โดย theme.js โหลดใน <head> ไม่มี defer — ทางเลือกที่ไม่เอา: ไฟล์ CSS แยกต่อ theme, ตั้ง class ตอน DOMContentLoaded, เก็บ theme ที่ server พร้อมเหตุผล
-ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
-```
-
-#### A2 · Explore
-
-```text
-อ่าน docs/features/theme.md แล้วอ่าน public/style.css, public/teacher.html และ public/student.html สรุปกลับมาว่า
-(1) CSS variable ตัวไหนที่ theme ต้อง override และต้องเพิ่มตัวไหน
-(2) ตรงไหนยังใช้สีตายตัว ไม่ผ่าน variable
-(3) ปุ่มที่ disable และพื้นหลังหน้า ตั้งค่าไว้ยังไง
-ยังไม่ต้องแก้ไฟล์
-```
-
-#### A3 · Plan
-
-```text
-เสนอแผนทำ feature เลือก Theme
-
-Goal: ผู้ใช้เลือก theme ได้ 5 แบบทั้งหน้าอาจารย์และหน้านักศึกษา browser จำไว้ และ reload แล้วไม่กะพริบ
-
-Context: docs/features/theme.md (AC, Mini-ADR), public/style.css, public/teacher.html, public/student.html
-
-Constraints:
-- แก้เฉพาะ public/* ไม่แตะ server, WebSocket, DB
-- ไม่เพิ่ม library ไม่มี class ไม่มีไฟล์ CSS แยกต่อ theme
-- public/theme.js ไฟล์เดียวใช้ร่วมสองหน้า โหลดใน <head> ต่อจาก style.css ไม่มี defer
-- ค่าใน localStorage เสียหรือ throw → Minimal
-- ไม่ทำเกิน doc
-
-Done when:
-- AC ทุกข้อใน docs/features/theme.md ผ่านเมื่อตรวจด้วยมือ
-- npm test และ npm run typecheck ยังผ่าน
-- git diff --stat มีเฉพาะไฟล์ใน public/ และ docs/features/theme.md
-
-ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
-```
-
-#### A4 · Implement
-
-```text
-แผนโอเค ลงมือได้ ไม่ต้องเขียนเทสต์ AC ตรวจด้วยมือ ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
-```
-
-#### A5 · Verify
-
-```bash
-npm test
-npm run typecheck
-git diff main --stat
-```
-
-- [ ] diff มีเฉพาะ `public/*` และ `docs/features/theme.md`
-- [ ] เปิดด้วย instance แยก (ดู "ลองหน้าเว็บโดยไม่ยุ่งกับ server หลัก" ท้ายขั้นนี้) เลือก Claymorphism → refresh → ยังอยู่ และเปิดอีกหน้าก็เป็น Claymorphism
-- [ ] devtools → Application → Local Storage แก้ค่า theme เป็น `xxx` → refresh → ได้ Minimal ไม่มี error ใน Console
-- [ ] วนครบ 5 theme × 2 หน้า × จอ 375px และจอใหญ่ เลื่อนจนสุดหน้า: ตัวอักษร ปุ่มที่ disable (ตอบแล้ว) และแถบ tally อ่านออก พื้นหลังเต็มหน้า
-
-### B. ตั้งเวลาก่อน publish
+### A. ตั้งเวลาก่อน publish
 
 อาจารย์เลือกเวลาต่อข้อ 10–120 วินาที (ค่าเริ่มต้นบน slider = 30) นักศึกษาเห็นนับถอยหลัง และ **server ปิดรับคำตอบเองเมื่อหมดเวลา**
 
@@ -333,7 +166,7 @@ fake เฉพาะ `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 
 
 agent ชอบทำเกิน: Timer class / map ของ timer หลายตัว (ต้องการแค่ตัวเดียว), grace period, clock sync, ปุ่มปิดก่อนเวลา, ตารางใหม่สำหรับเวลา
 
-#### B1 · Requirement → Design
+#### A1 · Requirement → Design
 
 ```text
 ช่วยร่าง docs/features/timer.md สำหรับ feature: อาจารย์เลือกเวลาต่อข้อ 10–120 วินาที (slider เริ่มที่ 30) นักศึกษาเห็นนับถอยหลัง และ server ปิดรับคำตอบเองเมื่อหมดเวลา
@@ -348,7 +181,7 @@ agent ชอบทำเกิน: Timer class / map ของ timer หลา�
 ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
 ```
 
-#### B2 · Explore
+#### A2 · Explore
 
 ```text
 อ่าน docs/features/timer.md แล้วอ่าน src/quiz.ts (publish, answer), src/db.ts (ตาราง current, setCurrent), src/server.ts และ test/server.test.ts สรุปกลับมาว่า
@@ -358,7 +191,7 @@ agent ชอบทำเกิน: Timer class / map ของ timer หลา�
 ยังไม่ต้องแก้ไฟล์
 ```
 
-#### B3 · Plan
+#### A3 · Plan
 
 ```text
 เสนอแผนทำ feature ตั้งเวลาก่อน publish
@@ -385,7 +218,7 @@ Done when:
 ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
 ```
 
-#### B4 · Implement
+#### A4 · Implement
 
 ```text
 แผนโอเค ลงมือได้
@@ -393,7 +226,7 @@ Done when:
 ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
 ```
 
-#### B5 · Verify
+#### A5 · Verify
 
 ```bash
 npm test
@@ -408,7 +241,7 @@ git diff main -- test       # ต้องไม่มีบรรทัด - �
 - [ ] publish ข้อ 1 (30 วิ) แล้วรีบ publish ข้อ 2 (60 วิ) → ข้อ 2 ไม่ถูกปิดตอนครบ 30 วิ
 - [ ] refresh หน้าอาจารย์ระหว่างนับ / หลังปิด → ยังเห็นเวลาและสถานะปิด
 
-### C. อาจารย์เพิ่ม / ลบโจทย์
+### B. อาจารย์เพิ่ม / ลบโจทย์
 
 อาจารย์เพิ่มและลบโจทย์จากหน้าเว็บ โจทย์เก็บในตาราง `questions` และอยู่รอดหลัง restart
 
@@ -421,7 +254,7 @@ git diff main -- test       # ต้องไม่มีบรรทัด - �
 
 agent ชอบทำเกิน: REST API แยก, แก้ไข/เรียงลำดับโจทย์, migration framework, ตัวนับ id max+1, modal แทน `confirm()`
 
-#### C1 · Requirement → Design
+#### B1 · Requirement → Design
 
 ```text
 ช่วยร่าง docs/features/questions.md สำหรับ feature: อาจารย์เพิ่มและลบโจทย์จากหน้าเว็บ โจทย์เก็บในตาราง questions และอยู่รอดหลัง restart
@@ -435,7 +268,7 @@ agent ชอบทำเกิน: REST API แยก, แก้ไข/เรี
 ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
 ```
 
-#### C2 · Explore
+#### B2 · Explore
 
 ```text
 อ่าน docs/features/questions.md แล้วอ่าน src/db.ts (ตาราง questions), src/quiz.ts, src/server.ts (ตรงที่เช็คว่า socket ไหนเป็นอาจารย์) และ public/teacher.html สรุปกลับมาว่า
@@ -445,7 +278,7 @@ agent ชอบทำเกิน: REST API แยก, แก้ไข/เรี
 ยังไม่ต้องแก้ไฟล์
 ```
 
-#### C3 · Plan
+#### B3 · Plan
 
 ```text
 เสนอแผนทำ feature อาจารย์เพิ่ม / ลบโจทย์
@@ -472,7 +305,7 @@ Done when:
 ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
 ```
 
-#### C4 · Implement
+#### B4 · Implement
 
 ```text
 แผนโอเค ลงมือได้
@@ -480,7 +313,7 @@ Done when:
 ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
 ```
 
-#### C5 · Verify
+#### B5 · Verify
 
 ```bash
 npm test
@@ -495,7 +328,7 @@ git diff main -- test       # ต้องไม่มีบรรทัด - �
 - [ ] เปิดหน้าอาจารย์ 2 แท็บ เพิ่มที่แท็บหนึ่ง → อีกแท็บเห็นด้วย
 - [ ] ส่ง input ว่าง / ตัวเลือกตัวเดียว → เห็นข้อความ error อ่านรู้เรื่อง
 
-### D. หน้ารวมคะแนน
+### C. หน้ารวมคะแนน
 
 แต่ละโจทย์มีเฉลย อาจารย์กดเฉลยเมื่อพร้อม และเห็นคะแนนรวมต่อคนข้ามหลายข้อ **เฉลยต้องไม่ไปถึง browser ของนักศึกษาก่อนอาจารย์กดเฉลย** — เปิด devtools ก็ต้องไม่เห็น
 
@@ -511,7 +344,7 @@ git diff main -- test       # ต้องไม่มีบรรทัด - �
 
 agent ชอบทำเกิน: หน้าใหม่พร้อม route, ตาราง cache คะแนน, ระบบ login อาจารย์, chart library
 
-#### D1 · Requirement → Design
+#### C1 · Requirement → Design
 
 ```text
 ช่วยร่าง docs/features/scoreboard.md สำหรับ feature: แต่ละโจทย์มีเฉลย อาจารย์กดเฉลยเมื่อพร้อม และเห็นคะแนนรวมต่อคนข้ามหลายข้อ เฉลยต้องไม่ไปถึง browser ของนักศึกษาก่อนอาจารย์กดเฉลย
@@ -526,7 +359,7 @@ agent ชอบทำเกิน: หน้าใหม่พร้อม route
 ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
 ```
 
-#### D2 · Explore
+#### C2 · Explore
 
 ```text
 อ่าน docs/features/scoreboard.md แล้วอ่าน src/db.ts, src/quiz.ts, src/messages.ts และ src/server.ts สรุปกลับมาว่า
@@ -536,7 +369,7 @@ agent ชอบทำเกิน: หน้าใหม่พร้อม route
 ยังไม่ต้องแก้ไฟล์
 ```
 
-#### D3 · Plan
+#### C3 · Plan
 
 ```text
 เสนอแผนทำ feature หน้ารวมคะแนน
@@ -565,7 +398,7 @@ Done when:
 ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
 ```
 
-#### D4 · Implement
+#### C4 · Implement
 
 ```text
 แผนโอเค ลงมือได้
@@ -573,7 +406,7 @@ Done when:
 ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
 ```
 
-#### D5 · Verify
+#### C5 · Verify
 
 ```bash
 npm test
@@ -588,6 +421,87 @@ git log --oneline main..    # เฉลยใน data/live-quiz.db ต้อง�
 - [ ] หลังเฉลย กดตอบไม่ได้ / เปิดหน้านักศึกษาใหม่ (incognito) join ทีหลัง → เห็นเฉลย
 - [ ] เฉลย 2 ข้อขึ้นไป → คะแนนรวมถูก คนที่ไม่ได้ตอบได้ 0
 - [ ] refresh หน้าอาจารย์ → scoreboard ยังอยู่
+
+### D. เลือก Theme
+
+ผู้ใช้เลือก theme ได้ทั้งหน้าอาจารย์และหน้านักศึกษา: Minimal (ปัจจุบัน, default), Liquid Glass, Glassmorphism, Claymorphism, Neumorphism และระบบจำที่เลือกไว้
+
+ตัดสินใจไว้แล้ว:
+- theme = attribute `data-theme` บน `<html>` + override CSS variable ใน `public/style.css` (Minimal = ค่า `:root` เดิม)
+- โค้ดเลือก theme อยู่ใน `public/theme.js` ไฟล์เดียว ใช้ร่วมสองหน้า
+- โหลด `theme.js` ใน `<head>` ต่อจาก `style.css` แบบไม่มี `defer` → ตั้ง theme ก่อนหน้าแสดง reload แล้วไม่กะพริบ
+- ค่าใน localStorage เสีย หรืออ่านไม่ได้ (throw) → ใช้ Minimal เงียบ ๆ
+- AC ตรวจด้วยมือ ไม่เขียนเทสต์
+
+กับดัก: บนพื้นกระจก ตัวอักษรจางจนอ่านไม่ออก โดยเฉพาะปุ่มที่ถูก disable — ต้อง **ดูทุก theme ด้วยตา** ทั้งจอมือถือ (devtools → toggle device) และจอใหญ่ และเลื่อนลงจนสุดหน้า (พื้นหลัง gradient มักไม่เต็มหน้า) ก่อนบอกว่าเสร็จ
+
+agent ชอบทำเกิน: ThemeManager class, ไฟล์ CSS แยกต่อ theme, dark mode, เก็บ theme ที่ server, เขียนเทสต์ให้ CSS
+
+#### D1 · Requirement → Design
+
+```text
+ช่วยร่าง docs/features/theme.md สำหรับ feature: ผู้ใช้เลือก theme ได้ทั้งหน้าอาจารย์และหน้านักศึกษา — Minimal (ปัจจุบัน, default), Liquid Glass, Glassmorphism, Claymorphism, Neumorphism และ browser จำที่เลือกไว้
+อ่าน AGENTS.md, public/style.css, public/teacher.html และ public/student.html ก่อน แล้วร่างหัวข้อ:
+- User story 1 ประโยค
+- Acceptance criteria 5 ข้อ ตรวจด้วยมือได้ (ทำอะไร แล้วต้องเห็นอะไร): ไม่เคยเลือก = Minimal / เลือกแล้วเปลี่ยนทันที refresh แล้วยังอยู่ และอีกหน้าก็ได้ theme เดียวกัน / reload แล้วไม่กะพริบเป็น Minimal ก่อน / ค่าใน localStorage เสียแล้วได้ Minimal ไม่มี error / ทุก theme อ่านตัวอักษรและปุ่มที่ disable ออก ทั้งจอ 375px และ ≥1280px เลื่อนจนสุดหน้า
+- Edge cases แยก "เก็บ" กับ "ตัด" — ตัด: dark mode, เก็บ theme ที่ server, ThemeManager class, ไฟล์ CSS แยกต่อ theme, เทสต์อัตโนมัติ
+- ไฟล์ที่ต้องแตะ: public/style.css, public/theme.js (ใหม่), public/teacher.html, public/student.html — ไม่มี message ใหม่
+- Mini-ADR: theme = data-theme บน <html> + override CSS variable ใน style.css โดย theme.js โหลดใน <head> ไม่มี defer — ทางเลือกที่ไม่เอา: ไฟล์ CSS แยกต่อ theme, ตั้ง class ตอน DOMContentLoaded, เก็บ theme ที่ server พร้อมเหตุผล
+ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
+```
+
+#### D2 · Explore
+
+```text
+อ่าน docs/features/theme.md แล้วอ่าน public/style.css, public/teacher.html และ public/student.html สรุปกลับมาว่า
+(1) CSS variable ตัวไหนที่ theme ต้อง override และต้องเพิ่มตัวไหน
+(2) ตรงไหนยังใช้สีตายตัว ไม่ผ่าน variable
+(3) ปุ่มที่ disable และพื้นหลังหน้า ตั้งค่าไว้ยังไง
+ยังไม่ต้องแก้ไฟล์
+```
+
+#### D3 · Plan
+
+```text
+เสนอแผนทำ feature เลือก Theme
+
+Goal: ผู้ใช้เลือก theme ได้ 5 แบบทั้งหน้าอาจารย์และหน้านักศึกษา browser จำไว้ และ reload แล้วไม่กะพริบ
+
+Context: docs/features/theme.md (AC, Mini-ADR), public/style.css, public/teacher.html, public/student.html
+
+Constraints:
+- แก้เฉพาะ public/* ไม่แตะ server, WebSocket, DB
+- ไม่เพิ่ม library ไม่มี class ไม่มีไฟล์ CSS แยกต่อ theme
+- public/theme.js ไฟล์เดียวใช้ร่วมสองหน้า โหลดใน <head> ต่อจาก style.css ไม่มี defer
+- ค่าใน localStorage เสียหรือ throw → Minimal
+- ไม่ทำเกิน doc
+
+Done when:
+- AC ทุกข้อใน docs/features/theme.md ผ่านเมื่อตรวจด้วยมือ
+- npm test และ npm run typecheck ยังผ่าน
+- git diff --stat มีเฉพาะไฟล์ใน public/ และ docs/features/theme.md
+
+ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
+```
+
+#### D4 · Implement
+
+```text
+แผนโอเค ลงมือได้ ไม่ต้องเขียนเทสต์ AC ตรวจด้วยมือ ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
+```
+
+#### D5 · Verify
+
+```bash
+npm test
+npm run typecheck
+git diff main --stat
+```
+
+- [ ] diff มีเฉพาะ `public/*` และ `docs/features/theme.md`
+- [ ] เปิดด้วย instance แยก (ดู "ลองหน้าเว็บโดยไม่ยุ่งกับ server หลัก" ท้ายขั้นนี้) เลือก Claymorphism → refresh → ยังอยู่ และเปิดอีกหน้าก็เป็น Claymorphism
+- [ ] devtools → Application → Local Storage แก้ค่า theme เป็น `xxx` → refresh → ได้ Minimal ไม่มี error ใน Console
+- [ ] วนครบ 5 theme × 2 หน้า × จอ 375px และจอใหญ่ เลื่อนจนสุดหน้า: ตัวอักษร ปุ่มที่ disable (ตอบแล้ว) และแถบ tally อ่านออก พื้นหลังเต็มหน้า
 
 <!-- tabs:end -->
 
