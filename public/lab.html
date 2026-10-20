@@ -19,6 +19,7 @@ body { padding: var(--space-4); }
 .lab-toc li { margin: 0; }
 .lab-toc a { display: block; padding: var(--space-1) 0; color: var(--text); text-decoration: none; font-size: var(--fs-sm); line-height: 1.4; }
 .lab-toc a:hover, .lab-toc a.active { color: var(--accent); }
+.lab-toc ul ul a.tab-open { color: var(--accent); font-weight: 600; }
 .lab-toc ul ul { padding-left: var(--space-4); }
 .lab-toc ul ul a { color: var(--muted); }
 .lab-toc .reset { margin-top: var(--space-3); width: 100%; font-size: var(--fs-sm); }
@@ -337,6 +338,8 @@ body { padding: var(--space-4); }
   var RE_TABS_START = /^\s*<!--\s*tabs:start\s*-->\s*$/, RE_TABS_END = /^\s*<!--\s*tabs:end\s*-->\s*$/;
   var TAB_KEY = LS_PREFIX + 'tab';
   var tabOpeners = {}; // panel id -> function that shows that tab (used by TOC links and #hash)
+  var tabBars = {};    // panel id -> its tab bar (TOC jumps there instead of into the panel)
+  var onTabChange = function () {}; // set by buildToc: marks the open tab in the TOC
   function buildTabs(lines, out, headings) {
     var intro = [], groups = [], cur = null, m;
     lines.forEach(function (l) {
@@ -355,6 +358,7 @@ body { padding: var(--space-4); }
         panels[j].hidden = j !== k;
       });
       if (save) { try { localStorage.setItem(TAB_KEY, String(k)); } catch (e) { /* ignore */ } }
+      onTabChange(panels.map(function (p) { return p.id; }), panels[k].id);
     }
     groups.forEach(function (g, k) {
       var b = el('button', 'tab'); b.type = 'button'; b.setAttribute('role', 'tab'); inline(b, g.title);
@@ -371,6 +375,7 @@ body { padding: var(--space-4); }
         var nk = (k + d + btns.length) % btns.length; select(nk, true); btns[nk].focus();
       });
       tabOpeners[p.id] = function () { select(k, true); };
+      tabBars[p.id] = bar;
       bar.appendChild(b); wrap.appendChild(p); btns.push(b); panels.push(p);
     });
     var start = 0;
@@ -419,6 +424,12 @@ body { padding: var(--space-4); }
     // highlight the section being read
     var links = {};
     toc.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+    onTabChange = function (ids, openId) {
+      ids.forEach(function (id) { if (links[id]) links[id].classList.toggle('tab-open', id === openId); });
+    };
+    Object.keys(tabOpeners).forEach(function (id) {
+      if (!document.getElementById(id).hidden && links[id]) links[id].classList.add('tab-open');
+    });
     if ('IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
@@ -428,7 +439,7 @@ body { padding: var(--space-4); }
           }
         });
       }, { rootMargin: '0px 0px -75% 0px' });
-      headings.forEach(function (h) { io.observe(document.getElementById(h.id)); });
+      headings.forEach(function (h) { if (!tabOpeners[h.id]) io.observe(document.getElementById(h.id)); });
     }
     // collapsed by default on narrow screens, always open on wide; picking an entry closes it on narrow
     var box = document.getElementById('tocBox');
@@ -438,8 +449,15 @@ body { padding: var(--space-4); }
     if (wide.addEventListener) wide.addEventListener('change', sync);
     toc.addEventListener('click', function (e) {
       if (e.target.tagName !== 'A') return;
-      var open = tabOpeners[e.target.getAttribute('href').slice(1)];
-      if (open) open();
+      var id = e.target.getAttribute('href').slice(1);
+      if (tabOpeners[id]) {
+        // feature entries switch the tab; only scroll if the tab bar is off screen
+        e.preventDefault();
+        tabOpeners[id]();
+        var r = tabBars[id].getBoundingClientRect();
+        if (r.top < 0 || r.bottom > window.innerHeight) tabBars[id].scrollIntoView({ block: 'start' });
+        if (history.replaceState) history.replaceState(null, '', '#' + id);
+      }
       if (!wide.matches) box.open = false;
     });
   }
@@ -473,7 +491,7 @@ body { padding: var(--space-4); }
     if (location.hash) {
       var hashId = decodeURIComponent(location.hash.slice(1));
       if (tabOpeners[hashId]) tabOpeners[hashId]();
-      var target = document.getElementById(hashId);
+      var target = tabBars[hashId] || document.getElementById(hashId);
       if (target) target.scrollIntoView();
     }
   }).catch(showError);

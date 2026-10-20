@@ -132,14 +132,14 @@ git diff main -- test
 
 ## 3. เลือก 1 feature
 
-| Feature | ระดับ | เวลา* | แตะส่วนไหน |
-|---|---|---|---|
-| A. ตั้งเวลาก่อน publish | กลาง | 45–70 นาที | teacher.html, student.html, quiz.ts, db.ts, messages.ts, server.ts |
-| B. อาจารย์เพิ่ม / ลบโจทย์ | กลาง | 45–60 นาที | teacher.html, quiz.ts, db.ts, messages.ts, server.ts |
-| C. หน้ารวมคะแนน | ยาก | 60–90 นาที | ทุกชั้น รวม schema |
-| D. เลือก Theme | ง่าย | 25–35 นาที | `public/*` เท่านั้น |
+| Feature | ระดับ | แตะส่วนไหน |
+|---|---|---|
+| A. ตั้งเวลาก่อน publish | กลาง | teacher.html, student.html, quiz.ts, db.ts, messages.ts, server.ts |
+| B. อาจารย์เพิ่ม / ลบโจทย์ | กลาง | teacher.html, quiz.ts, db.ts, messages.ts, server.ts |
+| C. หน้ารวมคะแนน | ยาก | ทุกชั้น รวม schema |
+| D. เลือก Theme | ง่าย | `public/*` เท่านั้น |
 
-\*เวลาจริงจากการซ้อมสำหรับคนที่ใช้ agent ครั้งแรก ไม่แน่ใจ → เริ่มจาก D (Theme)
+ไม่แน่ใจ → เริ่มจาก D (Theme)
 
 แต่ละ feature มีบทครบ 5 ขั้น: **Requirement → Design → Explore → Plan → Implement → Verify** copy prompt ไปส่งทีละขั้น รอ agent ตอบ อ่านคำตอบ แล้วค่อยส่งขั้นถัดไป เรื่องที่ต้องตัดสินใจ ตัดสินไว้ให้แล้วในหัวข้อ "ตัดสินใจไว้แล้ว" และใส่ไว้ใน prompt แล้ว งานของเราคือ **ตรวจว่า agent ทำตามนั้นจริง**
 
