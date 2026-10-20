@@ -13,12 +13,10 @@
 | 1 | Setup | 5 นาที |
 | Demo | อาจารย์ทำให้ดูบนจอ — ดูอย่างเดียว ไม่ต้องทำตาม | 10 นาที |
 | 2 | Warm-up: ทำ demo ซ้ำเอง (จำนักศึกษาด้วย token) | 15–20 นาที |
-| 3 | เลือก feature จากเมนู | 2 นาที |
-| 4 | Requirement → Design | 10 นาที |
-| 5 | Explore → Plan → Implement → Verify | 20–60 นาที ตามความยาก |
-| 6 | ทบทวน | 5 นาที |
+| 3 | เลือก 1 feature แล้วทำตามบทของมัน: Requirement → Design → Explore → Plan → Implement → Verify | 30–90 นาที ตามความยาก |
+| 4 | ทบทวน | 5 นาที |
 
-ในห้องส่วนใหญ่จะทำได้ถึงขั้น 4 หรือต้นขั้น 5 — ไม่เป็นไร ที่เหลือทำต่อที่บ้านได้
+ในห้องส่วนใหญ่จะทำได้ถึง Plan หรือต้น Implement ของ feature ที่เลือก — ไม่เป็นไร ที่เหลือทำต่อที่บ้านได้
 
 ---
 
@@ -229,21 +227,93 @@ git diff main -- test
 
 \*เวลาจริงจากการซ้อมสำหรับคนที่ใช้ agent ครั้งแรก ไม่แน่ใจ → เริ่มจาก A
 
+แต่ละ feature มีบทครบ 5 ขั้น: **Requirement → Design → Explore → Plan → Implement → Verify** copy prompt ไปส่งทีละขั้น รอ agent ตอบ อ่านคำตอบ แล้วค่อยส่งขั้นถัดไป เรื่องที่ต้องตัดสินใจ ตัดสินไว้ให้แล้วในหัวข้อ "ตัดสินใจไว้แล้ว" และใส่ไว้ใน prompt แล้ว งานของเราคือ **ตรวจว่า agent ทำตามนั้นจริง**
+
+ทุกขั้น ก่อนไปต่อ:
+- **Design** — AC ทุกข้อวัดได้ไหม ("ใช้งานง่าย", "สวย" = วัดไม่ได้ แก้เอง), เรื่องที่ไม่ได้ขออยู่ใน "ตัด" ไหม → commit doc ก่อนไปขั้นถัดไป
+- **Plan** — มีอะไรที่ doc ไม่ได้ขอ, library ใหม่, หรือรายการ "agent ชอบทำเกิน" ของ feature นั้นไหม → ตัดก่อนอนุมัติ
+- **Verify** — รันเองใน terminal อย่าเชื่อคำว่า "เสร็จแล้ว"
+
 ### A. เลือก Theme
 
 ผู้ใช้เลือก theme ได้ทั้งหน้าอาจารย์และหน้านักศึกษา: Minimal (ปัจจุบัน, default), Liquid Glass, Glassmorphism, Claymorphism, Neumorphism และระบบจำที่เลือกไว้
 
-จุดที่ต้องตัดสินใจเอง:
-- theme ทำด้วยอะไร — `public/style.css` เก็บทุกค่าเป็น CSS variable อยู่แล้ว ลองดูก่อนว่าต้องเพิ่มตัวไหน
-- โค้ดเลือก theme ใช้ร่วมสองหน้ายังไงโดยไม่ copy ซ้ำ
-- ทำไง reload แล้วไม่กะพริบเป็น Minimal ก่อน (โหลดสคริปต์ตรงไหน)
-- ค่าใน localStorage เสียหรือใช้ไม่ได้ → ทำอะไร
+ตัดสินใจไว้แล้ว:
+- theme = attribute `data-theme` บน `<html>` + override CSS variable ใน `public/style.css` (Minimal = ค่า `:root` เดิม)
+- โค้ดเลือก theme อยู่ใน `public/theme.js` ไฟล์เดียว ใช้ร่วมสองหน้า
+- โหลด `theme.js` ใน `<head>` ต่อจาก `style.css` แบบไม่มี `defer` → ตั้ง theme ก่อนหน้าแสดง reload แล้วไม่กะพริบ
+- ค่าใน localStorage เสีย หรืออ่านไม่ได้ (throw) → ใช้ Minimal เงียบ ๆ
+- AC ตรวจด้วยมือ ไม่เขียนเทสต์
 
 กับดัก: บนพื้นกระจก ตัวอักษรจางจนอ่านไม่ออก โดยเฉพาะปุ่มที่ถูก disable — ต้อง **ดูทุก theme ด้วยตา** ทั้งจอมือถือ (devtools → toggle device) และจอใหญ่ และเลื่อนลงจนสุดหน้า (พื้นหลัง gradient มักไม่เต็มหน้า) ก่อนบอกว่าเสร็จ
 
-feature นี้แตะแค่ CSS/JS ฝั่ง browser — AC ตรวจด้วยมือได้ ไม่ต้องเขียนเทสต์ (agent จะถาม ตอบว่า "ตรวจมือ")
-
 agent ชอบทำเกิน: ThemeManager class, ไฟล์ CSS แยกต่อ theme, dark mode, เก็บ theme ที่ server, เขียนเทสต์ให้ CSS
+
+#### A1 · Requirement → Design
+
+```text
+ช่วยร่าง docs/features/theme.md สำหรับ feature: ผู้ใช้เลือก theme ได้ทั้งหน้าอาจารย์และหน้านักศึกษา — Minimal (ปัจจุบัน, default), Liquid Glass, Glassmorphism, Claymorphism, Neumorphism และ browser จำที่เลือกไว้
+อ่าน AGENTS.md, public/style.css, public/teacher.html และ public/student.html ก่อน แล้วร่างหัวข้อ:
+- User story 1 ประโยค
+- Acceptance criteria 5 ข้อ ตรวจด้วยมือได้ (ทำอะไร แล้วต้องเห็นอะไร): ไม่เคยเลือก = Minimal / เลือกแล้วเปลี่ยนทันที refresh แล้วยังอยู่ และอีกหน้าก็ได้ theme เดียวกัน / reload แล้วไม่กะพริบเป็น Minimal ก่อน / ค่าใน localStorage เสียแล้วได้ Minimal ไม่มี error / ทุก theme อ่านตัวอักษรและปุ่มที่ disable ออก ทั้งจอ 375px และ ≥1280px เลื่อนจนสุดหน้า
+- Edge cases แยก "เก็บ" กับ "ตัด" — ตัด: dark mode, เก็บ theme ที่ server, ThemeManager class, ไฟล์ CSS แยกต่อ theme, เทสต์อัตโนมัติ
+- ไฟล์ที่ต้องแตะ: public/style.css, public/theme.js (ใหม่), public/teacher.html, public/student.html — ไม่มี message ใหม่
+- Mini-ADR: theme = data-theme บน <html> + override CSS variable ใน style.css โดย theme.js โหลดใน <head> ไม่มี defer — ทางเลือกที่ไม่เอา: ไฟล์ CSS แยกต่อ theme, ตั้ง class ตอน DOMContentLoaded, เก็บ theme ที่ server พร้อมเหตุผล
+ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
+```
+
+#### A2 · Explore
+
+```text
+อ่าน docs/features/theme.md แล้วอ่าน public/style.css, public/teacher.html และ public/student.html สรุปกลับมาว่า
+(1) CSS variable ตัวไหนที่ theme ต้อง override และต้องเพิ่มตัวไหน
+(2) ตรงไหนยังใช้สีตายตัว ไม่ผ่าน variable
+(3) ปุ่มที่ disable และพื้นหลังหน้า ตั้งค่าไว้ยังไง
+ยังไม่ต้องแก้ไฟล์
+```
+
+#### A3 · Plan
+
+```text
+เสนอแผนทำ feature เลือก Theme
+
+Goal: ผู้ใช้เลือก theme ได้ 5 แบบทั้งหน้าอาจารย์และหน้านักศึกษา browser จำไว้ และ reload แล้วไม่กะพริบ
+
+Context: docs/features/theme.md (AC, Mini-ADR), public/style.css, public/teacher.html, public/student.html
+
+Constraints:
+- แก้เฉพาะ public/* ไม่แตะ server, WebSocket, DB
+- ไม่เพิ่ม library ไม่มี class ไม่มีไฟล์ CSS แยกต่อ theme
+- public/theme.js ไฟล์เดียวใช้ร่วมสองหน้า โหลดใน <head> ต่อจาก style.css ไม่มี defer
+- ค่าใน localStorage เสียหรือ throw → Minimal
+- ไม่ทำเกิน doc
+
+Done when:
+- AC ทุกข้อใน docs/features/theme.md ผ่านเมื่อตรวจด้วยมือ
+- npm test และ npm run typecheck ยังผ่าน
+- git diff --stat มีเฉพาะไฟล์ใน public/ และ docs/features/theme.md
+
+ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
+```
+
+#### A4 · Implement
+
+```text
+แผนโอเค ลงมือได้ ไม่ต้องเขียนเทสต์ AC ตรวจด้วยมือ ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
+```
+
+#### A5 · Verify
+
+```bash
+npm test
+npm run typecheck
+git diff main --stat
+```
+
+- [ ] diff มีเฉพาะ `public/*` และ `docs/features/theme.md`
+- [ ] เปิดด้วย instance แยก (ดู "ลองหน้าเว็บโดยไม่ยุ่งกับ server หลัก" ท้ายขั้นนี้) เลือก Claymorphism → refresh → ยังอยู่ และเปิดอีกหน้าก็เป็น Claymorphism
+- [ ] devtools → Application → Local Storage แก้ค่า theme เป็น `xxx` → refresh → ได้ Minimal ไม่มี error ใน Console
+- [ ] วนครบ 5 theme × 2 หน้า × จอ 375px และจอใหญ่ เลื่อนจนสุดหน้า: ตัวอักษร ปุ่มที่ disable (ตอบแล้ว) และแถบ tally อ่านออก พื้นหลังเต็มหน้า
 
 ### B. ตั้งเวลาก่อน publish
 
@@ -251,122 +321,279 @@ agent ชอบทำเกิน: ThemeManager class, ไฟล์ CSS แย�
 
 มีสเปกเดิมให้แล้ว: `docs/01-prd.md` FR-6/FR-7, `docs/02-use-cases.md` UC-5, `docs/04-adr/ADR-003-server-authoritative-timer.md`, `docs/05-lld.md` ส่วน Iteration 2
 
-จุดที่ต้องตัดสินใจเอง:
-- ค่าเริ่มต้น 30 วินาที อยู่ที่ UI หรือที่ server (สเปก UC-5 A3: publish ที่ไม่ส่งเวลา = ไม่มี timer)
-- server restart ระหว่างนับ (แก้โค้ดแล้ว restart เอง!) → deadline ต้องอยู่ต่อไหม เก็บที่ไหน
-- publish ข้อใหม่ก่อนหมดเวลา → timer เก่าต้องไม่ไปปิดข้อใหม่
+ตัดสินใจไว้แล้ว:
+- ค่าเริ่มต้น 30 วินาทีอยู่ที่ UI (slider) เท่านั้น — publish ที่ไม่ส่งเวลา = ไม่มี timer (UC-5 A3) server ไม่มีค่า default
+- deadline เก็บเป็นคอลัมน์ `deadline_at` ในตาราง `current` (เพิ่มด้วย `addColumnIfMissing`) → server restart แล้วตั้ง timer ใหม่จากค่าเดิม ถ้าเลยเวลาแล้วปิดทันที
+- server มี timer ตัวเดียว `clearTimeout` ทุกครั้งก่อน publish (ทั้งข้อใหม่และข้อเดิมซ้ำ) → timer เก่าไม่ไปปิดข้อใหม่
+- `answer` ตัดสินด้วยเวลาเองด้วย (`now >= deadlineAt` → ปฏิเสธ `closed`) ไม่พึ่ง timer อย่างเดียว
 
 ต้องมีเทสต์ฝั่ง server: ใช้ `startServer()` แบบใน `test/server.test.ts` (helper `connect()` อยู่ใน `test/helpers.ts`) กับ `vi.useFakeTimers()` พิสูจน์ว่า server ปิดเองและปฏิเสธคำตอบที่มาช้า — แค่ disable ปุ่มฝั่ง browser ไม่นับ นักศึกษายังส่งผ่าน devtools ได้
 fake เฉพาะ `vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })` แล้วเดินเวลาด้วย `await vi.advanceTimersByTimeAsync(ms)` — fake ทั้งหมดแล้ว socket ค้าง
 
 agent ชอบทำเกิน: Timer class / map ของ timer หลายตัว (ต้องการแค่ตัวเดียว), grace period, clock sync, ปุ่มปิดก่อนเวลา, ตารางใหม่สำหรับเวลา
 
+#### B1 · Requirement → Design
+
+```text
+ช่วยร่าง docs/features/timer.md สำหรับ feature: อาจารย์เลือกเวลาต่อข้อ 10–120 วินาที (slider เริ่มที่ 30) นักศึกษาเห็นนับถอยหลัง และ server ปิดรับคำตอบเองเมื่อหมดเวลา
+อ่าน AGENTS.md, docs/01-prd.md (FR-6, FR-7), docs/02-use-cases.md (UC-5), docs/04-adr/ADR-003-server-authoritative-timer.md และ docs/05-lld.md ส่วน Iteration 2 ก่อน สเปกเดิมมีอยู่แล้ว ให้อ้างอิง ไม่ต้องออกแบบใหม่ แล้วร่างหัวข้อ:
+- User story 1 ประโยค
+- Acceptance criteria 5 ข้อ ทุกข้อต้องทดสอบได้ (ระบุ input และผลที่ต้องได้): publish พร้อมเวลาได้ deadlineAt / เวลานอกช่วง 10–120 ถูกปฏิเสธ / หมดเวลาแล้ว server ส่ง question:closed และ answer ที่มาช้าได้ answer:rejected reason closed / publish ข้อใหม่ก่อนหมดเวลา timer เก่าไม่ปิดข้อใหม่ / server restart ระหว่างนับ deadline เดิมยังอยู่และปิดตรงเวลา
+- Edge cases แยก "เก็บ" กับ "ตัด" — ตัด: grace period, clock sync, ปุ่มปิดก่อนเวลา, ต่อเวลา/pause, Timer class
+- ไฟล์ที่ต้องแตะ และ field / message ใหม่ (additive ทั้งหมด)
+- เทสต์ที่จะเขียน: unit ใน quiz.ts และ server test ด้วย startServer() + vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+- Mini-ADR: deadline เก็บในคอลัมน์ current.deadline_at เพื่อรอด restart และ server มี timer ตัวเดียว — ทางเลือกที่ไม่เอา: เก็บใน memory อย่างเดียว, เริ่มนับใหม่หลัง restart, ตาราง timers แยก พร้อมเหตุผล
+ค่าเริ่มต้น 30 วินาทีอยู่ที่ slider เท่านั้น publish ไม่ส่งเวลา = ไม่มี timer
+ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
+```
+
+#### B2 · Explore
+
+```text
+อ่าน docs/features/timer.md แล้วอ่าน src/quiz.ts (publish, answer), src/db.ts (ตาราง current, setCurrent), src/server.ts และ test/server.test.ts สรุปกลับมาว่า
+(1) ตอนนี้ publish และ answer ทำงานยังไง ตรงไหนต้องเปลี่ยน
+(2) ตาราง current เก็บอะไร ต้องเพิ่มคอลัมน์ยังไงให้ data/live-quiz.db เดิมใช้ต่อได้
+(3) เทสต์ที่เปิด server จริงเขียนยังไง
+ยังไม่ต้องแก้ไฟล์
+```
+
+#### B3 · Plan
+
+```text
+เสนอแผนทำ feature ตั้งเวลาก่อน publish
+
+Goal: อาจารย์ตั้งเวลา 10–120 วินาทีต่อข้อ นักศึกษาเห็นนับถอยหลัง และ server ปิดรับคำตอบเองเมื่อหมดเวลา แม้ server จะ restart ระหว่างนับ
+
+Context: docs/features/timer.md (AC, Mini-ADR), src/quiz.ts, src/db.ts, src/messages.ts, src/server.ts, public/teacher.html, public/student.html, test/server.test.ts, test/helpers.ts
+
+Constraints:
+- ไม่เพิ่ม library (ตาราง "ใช้ของที่มีอยู่แล้ว" ใน AGENTS.md)
+- ห้ามเปลี่ยน event เดิม เพิ่ม message / field optional ได้
+- ห้ามแก้เทสต์เดิม เพิ่มไฟล์เทสต์ใหม่ได้
+- quiz.ts ต้องยัง pure ไม่ import ws/express
+- deadline เก็บใน current.deadline_at เพิ่มด้วย addColumnIfMissing ใน openDb ไม่มีตารางใหม่
+- setTimeout ตัวเดียวใน server.ts clearTimeout ทุกครั้งก่อน publish
+- ค่าเริ่มต้น 30 อยู่ที่ slider เท่านั้น
+- ไม่ทำเกิน doc
+
+Done when:
+- AC ทุกข้อใน docs/features/timer.md มีเทสต์ (server test ใช้ startServer() + fake timers)
+- npm test และ npm run typecheck ผ่าน
+- git diff --stat มีเฉพาะไฟล์ที่ระบุใน doc
+
+ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
+```
+
+#### B4 · Implement
+
+```text
+แผนโอเค ลงมือได้
+เทสต์ server ใช้ vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] }) และ await vi.advanceTimersByTimeAsync(ms) / ห้ามแก้เทสต์เดิม / publish ข้อเดิมซ้ำก็ต้อง clearTimeout / ตอน server เริ่ม ถ้ามี deadline ค้างให้ตั้ง timer ใหม่ เลยแล้วปิดทันที
+ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
+```
+
+#### B5 · Verify
+
+```bash
+npm test
+npm run typecheck
+git diff main --stat
+git diff main -- test       # ต้องไม่มีบรรทัด - ในเทสต์เดิม
+```
+
+- [ ] มีเทสต์ที่เปิด server จริงแล้วพิสูจน์ว่า answer ที่มาหลังหมดเวลาได้ `closed`
+- [ ] ลองจริง (instance แยก): publish 10 วินาที → นักศึกษาเห็นนับถอยหลัง → หมดเวลาแล้วกดตอบไม่ได้
+- [ ] publish 60 วินาที → แก้โค้ดอะไรก็ได้ให้ server restart → นับต่อจากเดิม ไม่เริ่มใหม่
+- [ ] publish ข้อ 1 (30 วิ) แล้วรีบ publish ข้อ 2 (60 วิ) → ข้อ 2 ไม่ถูกปิดตอนครบ 30 วิ
+- [ ] refresh หน้าอาจารย์ระหว่างนับ / หลังปิด → ยังเห็นเวลาและสถานะปิด
+
 ### C. อาจารย์เพิ่ม / ลบโจทย์
 
 อาจารย์เพิ่มและลบโจทย์จากหน้าเว็บ โจทย์เก็บในตาราง `questions` และอยู่รอดหลัง restart
 
-จุดที่ต้องตัดสินใจเอง:
-- validate อะไรบ้าง (ข้อความว่าง, ตัวเลือกน้อยกว่า 2, ยาวเกิน) — เขียนเงื่อนไขเอง ไม่ใช้ zod
-- **ลบข้อที่กำลังเปิดอยู่ได้ไหม** ถ้าได้ ต้องเกิดอะไรกับนักศึกษาที่กำลังตอบ — ถ้าข้ามเรื่องนี้ server จะพัง
-- id ของโจทย์ใหม่สร้างยังไงให้ไม่ชนหลังมีการลบ
-- ใครส่งคำสั่งเพิ่ม/ลบได้ (`server.ts` รู้อยู่แล้วว่า socket ไหนเป็นอาจารย์)
-- หน้าอาจารย์หลุดแล้วต่อใหม่ (ไม่ได้ reload) รายการโจทย์บนจอยังเป็นของเก่าไหม
+ตัดสินใจไว้แล้ว:
+- validate เองใน `quiz.ts` (ไม่ใช้ zod): ข้อความว่างหรือยาวเกิน 200 ตัว, ตัวเลือกน้อยกว่า 2 หรือเกิน 6, ตัวเลือกว่างหรือยาวเกิน 100 ตัว → `error invalid_question` และตารางไม่เปลี่ยน
+- **ลบข้อที่กำลังเปิดอยู่ → ปฏิเสธ** `error question_in_use` อาจารย์ต้อง publish ข้ออื่นก่อนแล้วค่อยลบ (ลบได้เลยแล้ว server พังตอนมีคนตอบ)
+- id ของโจทย์ใหม่ = `crypto.randomUUID()` ไม่ใช่ max+1 (ลบข้อท้ายแล้วเพิ่มใหม่ id จะชนของเดิม)
+- ส่งคำสั่งเพิ่ม/ลบได้เฉพาะ socket ที่เป็นอาจารย์ (เช็คแบบเดียวกับ `publish` ใน `server.ts`)
+- อาจารย์ทุกแท็บได้รายการโจทย์ใหม่ทุกครั้งที่เพิ่ม/ลบ และตอน `teacher:join` (หลุดแล้วต่อใหม่โดยไม่ reload ก็ได้รายการล่าสุด)
 
 agent ชอบทำเกิน: REST API แยก, แก้ไข/เรียงลำดับโจทย์, migration framework, ตัวนับ id max+1, modal แทน `confirm()`
+
+#### C1 · Requirement → Design
+
+```text
+ช่วยร่าง docs/features/questions.md สำหรับ feature: อาจารย์เพิ่มและลบโจทย์จากหน้าเว็บ โจทย์เก็บในตาราง questions และอยู่รอดหลัง restart
+อ่าน AGENTS.md, src/db.ts, src/quiz.ts, src/server.ts, public/teacher.html และ docs/05-lld.md ก่อน แล้วร่างหัวข้อ:
+- User story 1 ประโยค
+- Acceptance criteria 5 ข้อ ทุกข้อต้องทดสอบได้ (ระบุ input และผลที่ต้องได้): เพิ่มโจทย์แล้วอาจารย์ทุกแท็บเห็นและ publish ได้ทันที / input ไม่ถูกต้องได้ error invalid_question และตารางไม่เปลี่ยน / ลบข้อที่ไม่ได้เปิดอยู่แล้วหายจากรายการ / ลบข้อที่กำลังเปิดได้ error question_in_use และนักศึกษายังตอบได้ / restart แล้วรายการเหมือนเดิม และ socket ที่ไม่ใช่อาจารย์สั่งเพิ่ม/ลบไม่ได้
+- กฎ validate: ข้อความว่างหรือเกิน 200 ตัว, ตัวเลือกน้อยกว่า 2 หรือเกิน 6, ตัวเลือกว่างหรือเกิน 100 ตัว เขียนเงื่อนไขเองใน quiz.ts
+- Edge cases แยก "เก็บ" กับ "ตัด" — เก็บ: id ใหม่ใช้ crypto.randomUUID ไม่ใช่ max+1, อาจารย์หลุดแล้วต่อใหม่ได้รายการล่าสุดตอน teacher:join — ตัด: แก้ไข/เรียงลำดับโจทย์, REST API, modal แทน confirm()
+- ไฟล์ที่ต้องแตะ และ message ใหม่ (additive ทั้งหมด)
+- Mini-ADR: ลบข้อที่กำลังเปิดอยู่ → ปฏิเสธด้วย question_in_use — ทางเลือกที่ไม่เอา: ลบได้แล้วเคลียร์ข้อปัจจุบัน, soft delete, ลบได้เลยไม่ตรวจ พร้อมเหตุผล
+ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
+```
+
+#### C2 · Explore
+
+```text
+อ่าน docs/features/questions.md แล้วอ่าน src/db.ts (ตาราง questions), src/quiz.ts, src/server.ts (ตรงที่เช็คว่า socket ไหนเป็นอาจารย์) และ public/teacher.html สรุปกลับมาว่า
+(1) โจทย์ถูกโหลดและเก็บยังไงตอนนี้
+(2) ถ้าแถวของข้อที่กำลังเปิดอยู่หายไป จุดไหนใน quiz.ts จะพัง
+(3) หน้าอาจารย์ได้รายการโจทย์มาจากไหน
+ยังไม่ต้องแก้ไฟล์
+```
+
+#### C3 · Plan
+
+```text
+เสนอแผนทำ feature อาจารย์เพิ่ม / ลบโจทย์
+
+Goal: อาจารย์เพิ่มและลบโจทย์จากหน้าเว็บได้ ข้อมูลอยู่รอดหลัง restart และลบข้อที่กำลังเปิดอยู่ไม่ได้
+
+Context: docs/features/questions.md (AC, Mini-ADR), src/db.ts, src/quiz.ts, src/messages.ts, src/server.ts, public/teacher.html, test/server.test.ts, test/helpers.ts
+
+Constraints:
+- ไม่เพิ่ม library validate เองใน quiz.ts ไม่ใช้ zod
+- ห้ามเปลี่ยน event เดิม เพิ่ม message / field / ErrorReason ได้
+- ห้ามแก้เทสต์เดิม เพิ่มไฟล์เทสต์ใหม่ได้
+- quiz.ts ต้องยัง pure ไม่ import ws/express
+- id ใหม่ใช้ crypto.randomUUID ไม่เปลี่ยน schema ของตาราง questions
+- คำสั่งเพิ่ม/ลบรับเฉพาะ socket ที่เป็นอาจารย์
+- ลบข้อที่กำลังเปิดอยู่ → error question_in_use
+- ไม่ทำเกิน doc
+
+Done when:
+- AC ทุกข้อใน docs/features/questions.md มีเทสต์ (เรื่องสิทธิ์ทดสอบผ่าน startServer() + connect())
+- npm test และ npm run typecheck ผ่าน
+- git diff --stat มีเฉพาะไฟล์ที่ระบุใน doc
+
+ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
+```
+
+#### C4 · Implement
+
+```text
+แผนโอเค ลงมือได้
+ห้ามแก้เทสต์เดิม / ปุ่มลบใช้ confirm() ของ browser พอ / ปุ่มลบของข้อที่กำลังเปิดให้ disable ไว้ แต่ server ต้องตรวจเองเสมอ / error ให้แสดงเป็นข้อความที่อ่านรู้เรื่อง ไม่ใช่ alert โค้ด error ดิบ
+ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
+```
+
+#### C5 · Verify
+
+```bash
+npm test
+npm run typecheck
+git diff main --stat
+git diff main -- test       # ต้องไม่มีบรรทัด - ในเทสต์เดิม
+```
+
+- [ ] ลองจริง (instance แยก): เพิ่มโจทย์ → publish ได้ → restart → โจทย์ยังอยู่
+- [ ] publish ข้อหนึ่งแล้วลองลบข้อนั้น → ถูกปฏิเสธ นักศึกษายังตอบได้ server ไม่พัง
+- [ ] ลบข้อท้ายแล้วเพิ่มใหม่ → id ไม่ซ้ำของเดิม
+- [ ] เปิดหน้าอาจารย์ 2 แท็บ เพิ่มที่แท็บหนึ่ง → อีกแท็บเห็นด้วย
+- [ ] ส่ง input ว่าง / ตัวเลือกตัวเดียว → เห็นข้อความ error อ่านรู้เรื่อง
 
 ### D. หน้ารวมคะแนน
 
 แต่ละโจทย์มีเฉลย อาจารย์กดเฉลยเมื่อพร้อม และเห็นคะแนนรวมต่อคนข้ามหลายข้อ **เฉลยต้องไม่ไปถึง browser ของนักศึกษาก่อนอาจารย์กดเฉลย** — เปิด devtools ก็ต้องไม่เห็น
 
-จุดที่ต้องตัดสินใจเอง:
-- เก็บเฉลยไว้ที่ไหนไม่ให้รั่ว — ลองดูว่า `GET /questions.json` ส่งอะไรออกไปบ้าง
-- คำตอบของข้อก่อน ๆ ยังอยู่ไหมตอน publish ข้อใหม่ (อ่าน `src/db.ts` ให้ดี) — scoreboard ต้องมีประวัติ
-- หลังเฉลยแล้ว ยังตอบได้ไหม / คนที่ join ทีหลังเห็นเฉลยไหม
-- นักศึกษารู้ไหมว่าตัวเองตอบถูกหรือผิด (ไม่ใช่แค่เห็นว่าข้อไหนถูก) — แล้วถ้า refresh ก่อนอาจารย์กดเฉลยล่ะ (browser ลืมว่าเลือกข้อไหน server ต้องบอก)
-- เปลี่ยน schema แล้ว `data/live-quiz.db` ที่ commit ไว้ต้องทำยังไง
-- `docs/01-prd.md` §3 เขียนว่าไม่ทำคะแนน — feature นี้ทับข้อนั้น ให้ agent จดไว้ที่หัว docs/features/scoreboard.md ไม่ต้องแก้ PRD
-- โจทย์ใน `data/live-quiz.db` ยังไม่มีเฉลย — ใส่เฉลยเป็น commit แยก (กฎใน AGENTS.md)
+ตัดสินใจไว้แล้ว:
+- เฉลยเก็บเป็นคอลัมน์ `correct` ในตาราง `questions` แต่ **ไม่ใส่ใน type `Question`** → `/questions.json` และ message ทุกตัวไม่มีทางหยิบไปได้ ออกจาก server ได้ทางเดียวคือตอนอาจารย์กดเฉลย และไม่ส่งให้หน้าอาจารย์ก่อนเฉลยด้วย (ใครก็ส่ง `teacher:join` ได้)
+- คำตอบข้อก่อน ๆ ถูกลบทุกครั้งที่ publish (ตาราง `answers` เก็บแค่ข้อปัจจุบัน) → เพิ่มตารางใหม่ `answer_log` เก็บประวัติ คะแนนคำนวณด้วย SQL ตอนขอ ไม่มีตาราง cache
+- หลังเฉลย ตอบข้อนั้นไม่ได้แล้ว (`answer:rejected` reason `revealed`) คนที่ join ทีหลังเห็นเฉลยของข้อปัจจุบัน
+- server ส่ง choice ของนักศึกษาคนนั้นกลับใน `joined` (เฉพาะของตัวเอง) → refresh ก่อนเฉลยแล้วยังรู้ว่าตัวเองถูกหรือผิด
+- schema: `addColumnIfMissing` + `CREATE TABLE IF NOT EXISTS` / เฉลยของโจทย์เดิม q1–q5 = `1, 1, 1, 0, 1` (index เริ่มที่ 0) ใส่ใน `data/live-quiz.db` เป็น commit แยก
+- `docs/01-prd.md` §3 เขียนว่าไม่ทำคะแนน — จดไว้ที่หัว `docs/features/scoreboard.md` ว่า feature นี้ทับข้อนั้น ไม่ต้องแก้ PRD
 
 ต้องมีเทสต์ที่พิสูจน์ว่าเฉลย **ไม่อยู่ใน message ใดที่ถึงนักศึกษา และไม่อยู่ใน `/questions.json`** ก่อนเฉลย
 
 agent ชอบทำเกิน: หน้าใหม่พร้อม route, ตาราง cache คะแนน, ระบบ login อาจารย์, chart library
 
----
-
-## 4. Requirement → Design (ก่อนแตะโค้ด)
-
-เขียนไฟล์เดียว `docs/features/<ชื่อ feature>.md` ให้ agent ช่วยร่าง แต่ **เราเป็นคนตัดสิน**:
+#### D1 · Requirement → Design
 
 ```text
-ช่วยร่าง docs/features/<ชื่อ>.md สำหรับ feature: <ยกคำอธิบาย feature จากด้านบน>
-อ่าน AGENTS.md และ docs/ ที่เกี่ยวข้องก่อน แล้วร่างหัวข้อ:
+ช่วยร่าง docs/features/scoreboard.md สำหรับ feature: แต่ละโจทย์มีเฉลย อาจารย์กดเฉลยเมื่อพร้อม และเห็นคะแนนรวมต่อคนข้ามหลายข้อ เฉลยต้องไม่ไปถึง browser ของนักศึกษาก่อนอาจารย์กดเฉลย
+อ่าน AGENTS.md, src/db.ts, src/quiz.ts, src/server.ts (ดูว่า GET /questions.json ส่งอะไรออกไป), docs/01-prd.md §3 และ docs/05-lld.md ก่อน แล้วร่างหัวข้อ:
+- หัวไฟล์: feature นี้ทับ non-goal "ไม่ทำคะแนน" ใน PRD §3 (ไม่ต้องแก้ PRD)
 - User story 1 ประโยค
-- Acceptance criteria 3–5 ข้อ ทุกข้อต้องทดสอบได้ (ระบุ input และผลที่ต้องได้)
-- Edge cases แยก "เก็บ" กับ "ตัด"
-- ไฟล์ที่ต้องแตะ และ message ใหม่ (ถ้ามี)
-- Mini-ADR 1 เรื่อง: การตัดสินใจที่สำคัญที่สุด พร้อมทางเลือกที่ไม่เอาและเหตุผล
+- Acceptance criteria 5 ข้อ ทุกข้อต้องทดสอบได้ (ระบุ input และผลที่ต้องได้): ก่อนเฉลย ไม่มีค่าเฉลยใน message ใดที่ถึงนักศึกษาหรืออาจารย์ และไม่อยู่ใน /questions.json / อาจารย์กดเฉลยแล้วนักศึกษาได้เฉลยและอาจารย์ได้ scoreboard / คะแนนรวมข้ามหลายข้อถูกต้อง รวมคนที่ไม่ได้ตอบ / หลังเฉลยตอบไม่ได้ (reason revealed) และคนที่ join ทีหลังเห็นเฉลย / refresh หน้าอาจารย์หรือ restart server แล้ว scoreboard เท่าเดิม
+- Edge cases แยก "เก็บ" กับ "ตัด" — เก็บ: นักศึกษา refresh ก่อนเฉลยแล้วยังรู้ว่าตัวเองถูกหรือผิด (server ส่ง choice ของตัวเองใน joined), โจทย์ที่ยังไม่มีเฉลย — ตัด: หน้าใหม่/route, ตาราง cache คะแนน, login อาจารย์, chart library
+- schema: คอลัมน์ questions.correct (addColumnIfMissing) + ตารางใหม่ answer_log (CREATE TABLE IF NOT EXISTS) และใส่เฉลยโจทย์เดิม q1–q5 = 1, 1, 1, 0, 1 เป็น commit แยก
+- ไฟล์ที่ต้องแตะ และ message ใหม่ (additive ทั้งหมด)
+- Mini-ADR: เฉลยอยู่นอก type Question และออกจาก server ทางเดียวคือตอนกดเฉลย ไม่ส่งให้หน้าอาจารย์ก่อนด้วย — ทางเลือกที่ไม่เอา: ใส่ใน Question แล้วตัดออกตอนส่ง, ส่งไป browser แล้วซ่อนด้วย UI, เก็บใน public/ พร้อมเหตุผล
 ยาวไม่เกิน 60 บรรทัด ยังไม่ต้องแก้ไฟล์อื่น
 ```
 
-อ่านแล้วแก้เอง:
-- AC ที่ทดสอบไม่ได้ ("ใช้งานง่าย", "สวย") → เขียนใหม่ให้วัดได้
-- edge case ที่ไม่ได้ขอ → ย้ายไป "ตัด"
-- จุดที่ต้องตัดสินใจในหัวข้อ feature ด้านบน → ต้องอยู่ใน Mini-ADR หรือ edge case ทุกข้อ
+#### D2 · Explore
 
-commit ไฟล์นี้ก่อนไปขั้นถัดไป
-
----
-
-## 5. Explore → Plan → Implement → Verify
-
-ขั้นเดียวกับ warm-up แต่คราวนี้เขียน prompt เอง ใช้ไฟล์จากขั้น 4 เป็น Context และ Done when
-
-**Explore**
 ```text
-อ่าน docs/features/<ชื่อ>.md แล้วอ่านเฉพาะโค้ดที่ feature นี้ต้องแตะ สรุปกลับมาว่าตอนนี้ทำงานยังไง และตรงไหนที่ต้องเปลี่ยน ยังไม่ต้องแก้ไฟล์
+อ่าน docs/features/scoreboard.md แล้วอ่าน src/db.ts, src/quiz.ts, src/messages.ts และ src/server.ts สรุปกลับมาว่า
+(1) GET /questions.json และ message question ส่ง field อะไรออกไปบ้าง ถ้าใส่ correct ใน type Question จะรั่วทางไหน
+(2) ตาราง answers เก็บอะไร และเกิดอะไรกับมันตอน publish ข้อใหม่
+(3) ต้องเพิ่มอะไรใน openDb ให้ data/live-quiz.db เดิมใช้ต่อได้
+ยังไม่ต้องแก้ไฟล์
 ```
 
-**Plan** — 4 ส่วน:
+#### D3 · Plan
+
 ```text
-Goal: <1–2 ประโยค สิ่งที่อยากได้ และปัญหาที่ต้องกัน>
-Context: อ่าน docs/features/<ชื่อ>.md (AC, mini-ADR) และไฟล์: <รายชื่อไฟล์จาก doc>
+เสนอแผนทำ feature หน้ารวมคะแนน
+
+Goal: อาจารย์กดเฉลยข้อปัจจุบันเมื่อพร้อมและเห็นคะแนนรวมต่อคนข้ามหลายข้อ โดยเฉลยไม่ไปถึง browser ใด ๆ ก่อนกดเฉลย
+
+Context: docs/features/scoreboard.md (AC, Mini-ADR), src/db.ts, src/quiz.ts, src/messages.ts, src/server.ts, public/teacher.html, public/student.html, scripts/reset.ts, test/server.test.ts, test/helpers.ts
+
 Constraints:
-- ไม่เพิ่ม dependency (ตาราง "ใช้ของที่มีอยู่แล้ว" ใน AGENTS.md)
-- ห้ามเปลี่ยน event เดิม เพิ่ม message/field ได้
-- ห้ามแก้เทสต์เดิมโดยไม่ถาม เพิ่มได้
-- data/live-quiz.db ใช้ต่อได้ (schema เปลี่ยน = CREATE TABLE IF NOT EXISTS / addColumnIfMissing ใน openDb)
-- <ข้อห้ามเฉพาะ feature เช่น "แก้เฉพาะ public/*", "เฉลยห้ามอยู่ใน type Question">
+- ไม่เพิ่ม library ไม่มีหน้าใหม่ ไม่มี route ใหม่ ไม่มี chart library
+- ห้ามเปลี่ยน event เดิม เพิ่ม message / field / reason ได้
+- ห้ามแก้เทสต์เดิม เพิ่มไฟล์เทสต์ใหม่ได้
+- quiz.ts ต้องยัง pure ไม่ import ws/express
+- เฉลยไม่อยู่ใน type Question ไม่ส่งให้ใครจนกว่าอาจารย์กดเฉลย
+- ประวัติคำตอบอยู่ในตารางใหม่ answer_log คะแนนคำนวณด้วย SQL ตอนขอ ไม่มีตาราง cache
+- schema เพิ่มด้วย addColumnIfMissing / CREATE TABLE IF NOT EXISTS ใน openDb
+- ใส่เฉลยโจทย์เดิม q1–q5 = 1, 1, 1, 0, 1 ใน data/live-quiz.db เป็น commit แยก
+- npm run reset ต้องล้างประวัติคำตอบและสถานะเฉลยด้วย
 - ไม่ทำเกิน doc
+
 Done when:
-- AC ทุกข้อใน docs/features/<ชื่อ>.md มีเทสต์หรือหลักฐานการรันจริง
+- AC ทุกข้อใน docs/features/scoreboard.md มีเทสต์ รวมเทสต์ที่ตรวจ raw message ทุกตัวที่นักศึกษาได้รับ และ body ของ /questions.json ว่าไม่มีเฉลยก่อนกดเฉลย
 - npm test และ npm run typecheck ผ่าน
 - git diff --stat มีเฉพาะไฟล์ที่ระบุใน doc
+
 ยังไม่ต้องแก้ไฟล์ เสนอแผนเป็นข้อ ๆ แล้วรอผมอนุมัติ
 ```
 
-อ่านแผน: มีอะไรที่ doc ไม่ได้ขอไหม มี library ใหม่ไหม มี "agent ชอบทำเกิน" ของ feature นี้ไหม → ตัดก่อนอนุมัติ
+#### D4 · Implement
 
-agent มักถามกลับ 1–3 ข้อก่อนลงมือ (เช่น ตัวเลข validate, จะแสดงผลแบบไหน, ตรวจ AC ด้วยเทสต์หรือด้วยมือ) — ตอบสั้น ๆ ในบรรทัดเดียวกับที่อนุมัติแผน แล้วไปต่อ อย่าใช้เวลาตรงนี้นาน
-
-**Implement**
 ```text
-แผนโอเค ลงมือได้ ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
+แผนโอเค ลงมือได้
+ห้ามแก้เทสต์เดิม / เฉลยข้อที่ไม่ใช่ข้อปัจจุบันไม่ได้ / publish ข้อเดิมซ้ำ = เริ่มข้อนั้นใหม่ (ลบคำตอบของข้อนั้นและสถานะเฉลย) / ไม่ส่งคะแนนรายคนให้นักศึกษา / ใส่เฉลยใน data/live-quiz.db เป็น commit แยกจากโค้ด
+ทำทีละขั้น commit เมื่อขั้นย่อยผ่าน แล้วรัน npm test และ npm run typecheck แสดง output จริง
 ```
 
-**Verify** — รันเอง ไล่ทีละ AC ใน doc:
+#### D5 · Verify
+
 ```bash
 npm test
 npm run typecheck
 git diff main --stat
-git diff main -- test       # บรรทัด - ในเทสต์เดิม = ต้องมีเหตุผล
+git diff main -- test       # ต้องไม่มีบรรทัด - ในเทสต์เดิม
+git log --oneline main..    # เฉลยใน data/live-quiz.db ต้องเป็น commit แยก
 ```
 
-ลองหน้าเว็บจริงด้วย (ดูหัวข้อถัดไป) agent ส่วนใหญ่ทดสอบผ่าน WebSocket แต่ไม่ได้เปิด browser — สิ่งที่การซ้อมเจอบ่อยคือ:
+- [ ] ลองจริง (instance แยก): publish → devtools → Network → WS ของนักศึกษา และเปิด `/questions.json` → ไม่มีเฉลย
+- [ ] นักศึกษาตอบ → refresh ก่อนเฉลย → อาจารย์กดเฉลย → นักศึกษาเห็นว่าตัวเองถูกหรือผิด
+- [ ] หลังเฉลย กดตอบไม่ได้ / เปิดหน้านักศึกษาใหม่ (incognito) join ทีหลัง → เห็นเฉลย
+- [ ] เฉลย 2 ข้อขึ้นไป → คะแนนรวมถูก คนที่ไม่ได้ตอบได้ 0
+- [ ] refresh หน้าอาจารย์ → scoreboard ยังอยู่
+
+### ลองหน้าเว็บโดยไม่ยุ่งกับ server หลัก
+
+agent ส่วนใหญ่ทดสอบผ่าน WebSocket แต่ไม่ได้เปิด browser — สิ่งที่การซ้อมเจอบ่อยคือ:
 - **refresh หน้าอาจารย์ระหว่างใช้งาน** สถานะบนจอหายไหม (ข้อที่ปิดแล้ว, เฉลยที่กดไปแล้ว)
 - **เปิดหน้าอาจารย์ 2 แท็บ** แท็บหนึ่งทำอะไรแล้วอีกแท็บพังไหม
 - **ข้อความ error** อ่านรู้เรื่องไหม หรือขึ้นเป็นโค้ดอย่าง `invalid_question`
-
-### ลองหน้าเว็บโดยไม่ยุ่งกับ server หลัก
 
 server หลัก (`npm start`) ใช้ port 3000 และ `data/live-quiz.db` ถ้าอยากลองแยก หรือให้ agent ลองรันจริง ให้ใช้ port และ db ชั่วคราว:
 
@@ -382,7 +609,7 @@ $env:PORT=3001; $env:DB_PATH="$env:TEMP\live-quiz-try.db"; npm start
 
 ---
 
-## 6. ทบทวน
+## 4. ทบทวน
 
 **Checklist: agent พลาดแบบไหนบ่อย** — ไล่กับ `git diff main` ของตัวเอง
 
