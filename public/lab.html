@@ -68,6 +68,17 @@ body { padding: var(--space-4); }
 #lab .demo-box blockquote { background: var(--surface); }
 @media (max-width: 30rem) { .demo-box { padding-left: var(--space-3); padding-right: var(--space-3); } }
 
+.tabs { margin: var(--space-4) 0 var(--space-5); }
+.tab-bar { display: flex; flex-wrap: wrap; gap: var(--space-2); border-bottom: 2px solid var(--border); margin-bottom: var(--space-4); }
+.tab-bar .tab { margin: 0 0 -2px; padding: var(--space-2) var(--space-4); min-height: 2.5rem; font-size: var(--fs-sm); font-weight: 600;
+  background: none; border: 0; border-bottom: 3px solid transparent; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  color: var(--muted); box-shadow: none; cursor: pointer; }
+.tab-bar .tab:hover { color: var(--text); background: var(--track); }
+.tab-bar .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); background: var(--accent-soft); }
+.tab-panel[hidden] { display: none; }
+#lab .tab-panel > h4:first-child { margin-top: 0; }
+#lab h4 { font-size: 1rem; margin: var(--space-5) 0 var(--space-2); line-height: 1.4; }
+
 .lab-error { padding: var(--space-5); background: var(--surface); border: 1px solid var(--danger);
   border-radius: var(--radius); color: var(--danger); }
 
@@ -322,11 +333,62 @@ body { padding: var(--space-4); }
 
   // <!-- demo:start --> ... <!-- demo:end --> -> boxed "DEMO" section (comments stay invisible in plain markdown)
   var RE_DEMO_START = /^\s*<!--\s*demo:start\s*-->\s*$/, RE_DEMO_END = /^\s*<!--\s*demo:end\s*-->\s*$/;
+  // <!-- tabs:start --> ... <!-- tabs:end --> -> each "### heading" inside becomes one tab
+  var RE_TABS_START = /^\s*<!--\s*tabs:start\s*-->\s*$/, RE_TABS_END = /^\s*<!--\s*tabs:end\s*-->\s*$/;
+  var TAB_KEY = LS_PREFIX + 'tab';
+  var tabOpeners = {}; // panel id -> function that shows that tab (used by TOC links and #hash)
+  function buildTabs(lines, out, headings) {
+    var intro = [], groups = [], cur = null, m;
+    lines.forEach(function (l) {
+      if ((m = /^###\s+(.*?)\s*#*\s*$/.exec(l))) { cur = { title: m[1], lines: [] }; groups.push(cur); }
+      else (cur ? cur.lines : intro).push(l);
+    });
+    if (intro.some(function (l) { return l.trim(); })) parse(intro, out, headings);
+    if (!groups.length) return;
+    var wrap = el('div', 'tabs'), bar = el('div', 'tab-bar'), btns = [], panels = [];
+    bar.setAttribute('role', 'tablist');
+    wrap.appendChild(bar);
+    function select(k, save) {
+      btns.forEach(function (b, j) {
+        b.setAttribute('aria-selected', j === k ? 'true' : 'false');
+        b.tabIndex = j === k ? 0 : -1;
+        panels[j].hidden = j !== k;
+      });
+      if (save) { try { localStorage.setItem(TAB_KEY, String(k)); } catch (e) { /* ignore */ } }
+    }
+    groups.forEach(function (g, k) {
+      var b = el('button', 'tab'); b.type = 'button'; b.setAttribute('role', 'tab'); inline(b, g.title);
+      var p = el('div', 'tab-panel'); p.setAttribute('role', 'tabpanel');
+      p.id = 'h-' + headings.length;
+      headings.push({ level: 3, text: b.textContent, id: p.id });
+      b.id = p.id + '-tab'; b.setAttribute('aria-controls', p.id); p.setAttribute('aria-labelledby', b.id);
+      parse(g.lines, p, null);
+      b.addEventListener('click', function () { select(k, true); });
+      b.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        var nk = (k + d + btns.length) % btns.length; select(nk, true); btns[nk].focus();
+      });
+      tabOpeners[p.id] = function () { select(k, true); };
+      bar.appendChild(b); wrap.appendChild(p); btns.push(b); panels.push(p);
+    });
+    var start = 0;
+    try { start = parseInt(localStorage.getItem(TAB_KEY), 10) || 0; } catch (e) { /* ignore */ }
+    select(start >= 0 && start < groups.length ? start : 0, false);
+    out.appendChild(wrap);
+  }
+
   function parseDoc(lines, out, headings) {
-    var seg = [], box = null;
+    var seg = [], box = null, tabs = null;
     function flush() { parse(seg, box || out, headings); seg = []; }
     lines.forEach(function (l) {
-      if (!box && RE_DEMO_START.test(l)) {
+      if (tabs) {
+        if (RE_TABS_END.test(l)) { buildTabs(tabs, box || out, headings); tabs = null; }
+        else tabs.push(l);
+      } else if (RE_TABS_START.test(l)) {
+        flush(); tabs = [];
+      } else if (!box && RE_DEMO_START.test(l)) {
         flush();
         box = el('section', 'demo-box');
         var badge = el('span', 'demo-badge', 'DEMO'); badge.setAttribute('aria-hidden', 'true');
@@ -335,6 +397,7 @@ body { padding: var(--space-4); }
         flush(); out.appendChild(box); box = null;
       } else seg.push(l);
     });
+    if (tabs) buildTabs(tabs, box || out, headings); // unclosed tabs marker
     flush();
     if (box) out.appendChild(box); // unclosed marker: still render what we have
   }
@@ -373,7 +436,12 @@ body { padding: var(--space-4); }
     function sync() { box.open = wide.matches; }
     sync();
     if (wide.addEventListener) wide.addEventListener('change', sync);
-    toc.addEventListener('click', function (e) { if (e.target.tagName === 'A' && !wide.matches) box.open = false; });
+    toc.addEventListener('click', function (e) {
+      if (e.target.tagName !== 'A') return;
+      var open = tabOpeners[e.target.getAttribute('href').slice(1)];
+      if (open) open();
+      if (!wide.matches) box.open = false;
+    });
   }
 
   document.getElementById('resetBtn').addEventListener('click', function () {
@@ -403,7 +471,9 @@ body { padding: var(--space-4); }
     if (t) document.title = t.textContent;
     buildToc(headings);
     if (location.hash) {
-      var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      var hashId = decodeURIComponent(location.hash.slice(1));
+      if (tabOpeners[hashId]) tabOpeners[hashId]();
+      var target = document.getElementById(hashId);
       if (target) target.scrollIntoView();
     }
   }).catch(showError);
